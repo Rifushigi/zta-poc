@@ -16,3 +16,10 @@ TOKEN=$(curl -s -X POST \
   -d "grant_type=password" | jq -r '.access_token')
 
 echo "Your token: $TOKEN"
+
+# Query OPA with the token
+curl -X POST http://localhost:8181/v1/data/authz/allow \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"token": "'"$TOKEN"'"}}'
+
+# Expected response: {"result": true} if allowed
