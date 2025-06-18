@@ -1,6 +1,6 @@
 package authz
 
-default allow = false
+default allow := false
 
 allow if {
     input.method == "GET"
