@@ -1,0 +1,25 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    ports:
+      - "8080:8080"
+    networks:
+      - on-prem-net
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: securepassword
+    command: start-dev
+
+  opa:
+    image: openpolicyagent/opa:1.5.1
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./policies/v1:/policies
+    command: run --server --log-level=debug --bundle /policies
+      
+networks:
+  on-prem-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-on-prem
