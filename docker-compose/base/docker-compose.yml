@@ -15,9 +15,17 @@ services:
     ports:
       - "8181:8181"
     volumes:
-      - ./policies/v1:/policies
-    command: run --server --log-level=debug --bundle /policies
-      
+      - ../../policies/v1:/policies
+    entrypoint: ["opa"]
+    command:
+      [
+        "run",
+        "--server",
+        "--log-level=debug",
+        "--addr=0.0.0.0:8181",
+        "/policies",
+      ]
+
 networks:
   on-prem-net:
     driver: bridge
