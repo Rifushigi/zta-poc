@@ -1,23 +1,54 @@
 # Zero Trust Architecture PoC – Codebase Overview
 
-A detailed breakdown of the Zero Trust PoC codebase, including architecture, directory structure, service interactions, and onboarding notes.
+A practical guide for onboarding and quick reference to the Zero Trust PoC codebase, including architecture, directory structure, service interactions, and getting started.
+
+> **📖 For detailed architectural analysis and design decisions, see [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md)**
 
 ---
 
 ## Table of Contents
-- [1. Architecture](#1-architecture)
-- [2. Directory Structure](#2-directory-structure)
-- [3. Component Integration](#3-component-integration)
-- [4. Service Deep-Dives](#4-service-deep-dives)
-- [5. Security & Observability](#5-security--observability)
-- [6. Deployment & Development](#6-deployment--development)
-- [7. Extending the System](#7-extending-the-system)
-- [8. Onboarding & Contribution](#8-onboarding--contribution)
-- [9. References](#9-references)
+- [1. Quick Start](#1-quick-start)
+- [2. Architecture Overview](#2-architecture-overview)
+- [3. Directory Structure](#3-directory-structure)
+- [4. Component Integration](#4-component-integration)
+- [5. Service Deep-Dives](#5-service-deep-dives)
+- [6. Security & Observability](#6-security--observability)
+- [7. Deployment & Development](#7-deployment--development)
+- [8. Extending the System](#8-extending-the-system)
+- [9. Onboarding & Contribution](#9-onboarding--contribution)
+- [10. References](#10-references)
 
 ---
 
-## 1. Architecture
+## 1. Quick Start
+
+### Prerequisites
+- Docker and Docker Compose
+- Node.js 18+ (for local development)
+- OpenSSL (for certificate generation)
+
+### Deploy in 3 Steps
+```bash
+# 1. Setup networks, certs, and secrets
+./scripts/setup.sh
+
+# 2. Deploy the stack
+./scripts/deploy.sh
+
+# 3. For frontend hot-reload dev mode
+./scripts/deploy-dev.sh
+```
+
+### Access Services
+- **Frontend**: https://localhost:8080
+- **Keycloak Admin**: http://localhost:8080 (admin/admin)
+- **API Gateway**: https://localhost:8443
+- **Grafana**: http://localhost:3001 (admin/admin)
+- **Prometheus**: http://localhost:9090
+
+---
+
+## 2. Architecture Overview
 
 This PoC demonstrates a modern Zero Trust stack for hybrid cloud environments. It enforces strict identity, policy, and network controls, and provides full observability.
 
@@ -46,9 +77,11 @@ graph TD
     Prometheus-->|Alerts|Alertmanager
 ```
 
+> **🏗️ For detailed architectural analysis, see [Section 4: Component Architecture](./ARCHITECTURE_DEEP_DIVE.md#4-component-architecture) in the Deep Dive**
+
 ---
 
-## 2. Directory Structure
+## 3. Directory Structure
 
 ```
 /
@@ -78,15 +111,21 @@ graph TD
 │   └── ...
 ├── policies/                           # OPA policy bundles
 ├── scripts/                            # Automation scripts (deploy, setup, etc.)
+│   ├── lib/                            # Shared script libraries
+│   │   ├── common.sh                   # Common deployment functions
+│   │   └── test-helpers.sh             # Common test functions
+│   ├── deploy.sh                       # Production deployment
+│   ├── deploy-dev.sh                   # Development deployment
+│   └── test-*.sh                       # Test scripts
 ├── certs/                              # mTLS certificates (auto-generated)
 ├── README.md                           # Project overview and quickstart
-├── implementation_guide.md             # Step-by-step implementation guide
-└── ...                                 # Other docs, configs, and CI/CD files
+├── ARCHITECTURE_DEEP_DIVE.md           # Detailed architectural analysis
+└── implementation_guide.md             # Step-by-step implementation guide
 ```
 
 ---
 
-## 3. Component Integration
+## 4. Component Integration
 
 ### Authentication & Authorization
 - **Keycloak** issues JWTs after OIDC login. All API requests must present a valid JWT.
@@ -105,11 +144,13 @@ graph TD
 - **Alertmanager** sends alerts based on Prometheus rules.
 - **ELK Stack** aggregates logs from all services for search and analysis.
 
+> **🔍 For detailed integration patterns, see [Section 6: Integration Patterns](./ARCHITECTURE_DEEP_DIVE.md#6-integration-patterns) in the Deep Dive**
+
 ---
 
-## 4. Service Deep-Dives
+## 5. Service Deep-Dives
 
-### 4.1 Keycloak (Identity & Access Management)
+### 5.1 Keycloak (Identity & Access Management)
 - **Purpose:** Centralized authentication, user management, and RBAC.
 - **Integration:**
   - Issues JWTs for users/services.
@@ -118,7 +159,7 @@ graph TD
 - **Customization:**
   - Realms, clients, and roles can be managed via the admin UI or REST API.
 
-### 4.2 OPA (Policy Enforcement)
+### 5.2 OPA (Policy Enforcement)
 - **Purpose:** Fine-grained, dynamic authorization using Rego policies.
 - **Integration:**
   - Kong and backend query OPA for allow/deny decisions.
@@ -126,7 +167,7 @@ graph TD
 - **Example:**
   - A policy might allow only users with the `admin` role to access certain endpoints.
 
-### 4.3 Kong (API Gateway)
+### 5.3 Kong (API Gateway)
 - **Purpose:** Entry point for all API traffic, enforcing mTLS, JWT validation, and rate limiting.
 - **Integration:**
   - Validates JWTs from Keycloak.
@@ -136,7 +177,7 @@ graph TD
 - **Customization:**
   - Plugins and routes are configured in `services/api-gateway/gateway-config.yaml`.
 
-### 4.4 Backend Service
+### 5.4 Backend Service
 - **Tech:** Node.js (Express), Sequelize ORM, PostgreSQL.
 - **Features:**
   - CRUD endpoints, input validation, auditing, Prometheus metrics, OpenAPI docs, security headers, rate limiting, CORS, structured logging, request tracing.
@@ -147,23 +188,25 @@ graph TD
 - **Customization:**
   - Business logic, models, and API routes in `services/backend-service/`.
 
-### 4.5 PostgreSQL (Database)
+### 5.5 PostgreSQL (Database)
 - **Purpose:** Persistent storage for backend service.
 - **Integration:**
   - Managed via Docker Compose.
   - Credentials injected via Docker secrets.
   - Data volume for persistence.
 
-### 4.6 Monitoring & Observability
+### 5.6 Monitoring & Observability
 - **Prometheus:** Scrapes metrics from backend and infrastructure.
 - **Grafana:** Visualizes metrics and dashboards.
 - **Alertmanager:** Sends alerts based on Prometheus rules.
 - **ELK Stack:** Aggregates and indexes logs from all services.
 - **Node Exporter:** Collects host-level metrics.
 
+> **🔧 For detailed service architecture, see [Section 4: Component Architecture](./ARCHITECTURE_DEEP_DIVE.md#4-component-architecture) in the Deep Dive**
+
 ---
 
-## 5. Security & Observability
+## 6. Security & Observability
 
 - **mTLS:** All service-to-service traffic is encrypted and authenticated.
 - **JWT Authentication:** All API calls require valid JWTs from Keycloak.
@@ -175,9 +218,11 @@ graph TD
 - **Log Rotation:** Automated log rotation for backend and monitoring components.
 - **Dashboards:** Grafana dashboards for infrastructure and security; Kibana for logs.
 
+> **🛡️ For detailed security architecture, see [Section 5: Security Architecture](./ARCHITECTURE_DEEP_DIVE.md#5-security-architecture) in the Deep Dive**
+
 ---
 
-## 6. Deployment & Development
+## 7. Deployment & Development
 
 ### Local Development
 ```bash
@@ -200,44 +245,73 @@ docker-compose up -d
 docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml up -d
 ```
 
-### Render.com Deployment
-- Use `docker-compose.render.yml` for cloud deployment.
-- See `RENDER_DEPLOYMENT.md` for details.
+### Testing
+```bash
+# Test full deployment
+./scripts/test-deployment.sh
+
+# Test backend features specifically
+./scripts/test-backend-features.sh
+```
+
+> **🚀 For detailed deployment architecture, see [Section 9: Deployment Architecture](./ARCHITECTURE_DEEP_DIVE.md#9-deployment-architecture) in the Deep Dive**
 
 ---
 
-## 7. Extending the System
+## 8. Extending the System
 
-- **Add new services:** Extend `docker-compose.yml` and create a new directory under `services/`.
-- **Add new policies:** Place Rego files in `policies/` and reload OPA.
-- **Add dashboards/alerts:** Place new JSON/YAML files in `monitoring/` and reload Prometheus/Grafana.
-- **Add scripts:** Place automation or utility scripts in `scripts/`.
-- **CI/CD:** GitHub Actions for build, test, and deploy.
+### Adding New Services
+1. Create service directory in `services/`
+2. Add Dockerfile and configuration
+3. Update `docker-compose.yml`
+4. Add monitoring configuration
+5. Update OPA policies if needed
 
----
+### Adding New Policies
+1. Create Rego file in `policies/`
+2. Test with OPA CLI: `opa test policies/`
+3. Deploy and test with real requests
 
-## 8. Onboarding & Contribution
+### Adding New Monitoring
+1. Configure Prometheus targets
+2. Create Grafana dashboards
+3. Set up alerting rules
 
-- **Getting Started:**
-  - Read this file and the [README.md](./README.md).
-  - Run the quick start commands above.
-  - Explore each service's directory for more details.
-- **Best Practices:**
-  - Never commit secrets or certificates.
-  - Use environment variables for non-sensitive config.
-  - Write tests for new features.
-  - Document new services, policies, or dashboards.
-- **Support:**
-  - Open an issue or consult the documentation.
+> **🔧 For detailed extension patterns, see [Section 7: Integration Patterns](./ARCHITECTURE_DEEP_DIVE.md#7-integration-patterns) in the Deep Dive**
 
 ---
 
-## 9. References
-- [Implementation Guide](./implementation_guide.md)
-- [Monitoring Setup](./monitoring/README.md)
-- [Backend API Docs](./services/backend-service/README.md)
-- [Policy Reference](./policies/README.md)
-- [Render Deployment](./RENDER_DEPLOYMENT.md)
+## 9. Onboarding & Contribution
+
+### For New Contributors
+1. Read this overview first
+2. Review [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md) for technical details
+3. Follow [implementation_guide.md](./implementation_guide.md) for step-by-step setup
+4. Run tests to verify your environment
+
+### Development Workflow
+1. Use `./scripts/deploy-dev.sh` for development
+2. Write tests for new features
+3. Update documentation as needed
+4. Follow security best practices
+
+### Code Organization
+- **Scripts**: Use shared libraries in `scripts/lib/`
+- **Services**: Keep services modular and focused
+- **Policies**: Version control all OPA policies
+- **Documentation**: Keep this overview updated for onboarding
+
+---
+
+## 10. References
+
+- [Zero Trust Architecture Principles](https://www.nist.gov/publications/zero-trust-architecture)
+- [Keycloak Documentation](https://www.keycloak.org/documentation)
+- [OPA Documentation](https://www.openpolicyagent.org/docs/)
+- [Kong Documentation](https://docs.konghq.com/)
+- [Prometheus Documentation](https://prometheus.io/docs/)
+
+> **📚 For comprehensive architectural references and design decisions, see [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md)**
 
 ---
 
