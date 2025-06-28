@@ -1,0 +1,11 @@
+version: '3.8'
+
+networks:
+  on-prem-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-on-prem
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1 
