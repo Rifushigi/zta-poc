@@ -40,7 +40,7 @@ check_docker() {
 setup_secrets() {
     if [ ! -f secrets/db_user.txt ]; then
         print_status "Setting up secrets..."
-        ./scripts/setup-secrets.sh
+        ./setup-secrets.sh
     else
         print_success "Secrets already configured"
     fi
@@ -49,14 +49,14 @@ setup_secrets() {
 # Setup networks
 setup_networks() {
     print_status "Setting up networks..."
-    ./scripts/setup-networks.sh
+    ./setup-networks.sh
 }
 
 # Generate certificates
 setup_certificates() {
     print_status "Setting up certificates..."
     if [ ! -d "certs" ] || [ -z "$(ls -A certs 2>/dev/null)" ]; then
-        ./scripts/generate-certs.sh
+        ./generate-certs.sh
         print_success "Certificates generated"
     else
         print_success "Certificates already exist"
@@ -76,19 +76,19 @@ deploy_core_services() {
 # Setup Keycloak
 setup_keycloak() {
     print_status "Setting up Keycloak realm and users..."
-    ./scripts/setup-keycloak.sh
+    ./setup-keycloak.sh
 }
 
 # Deploy frontend
 deploy_frontend() {
     print_status "Deploying frontend application..."
-    ./scripts/setup-frontend.sh prod
+    ./setup-frontend.sh prod
 }
 
 # Test deployment
 test_deployment() {
     print_status "Testing deployment..."
-    ./scripts/test-deployment.sh
+    ./test-deployment.sh
 }
 
 # Show final status
@@ -115,7 +115,7 @@ show_final_status() {
     echo ""
     echo "🧪 Test the deployment:"
     echo "======================"
-    echo "./scripts/test-deployment.sh"
+    echo "./test-deployment.sh"
     echo ""
     echo "📊 Monitor the system:"
     echo "====================="
