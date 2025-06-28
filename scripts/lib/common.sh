@@ -40,14 +40,14 @@ check_docker() {
 # Setup networks
 setup_networks() {
     print_status "Setting up networks..."
-    ./scripts/setup-networks.sh
+    ./setup-networks.sh
 }
 
 # Generate certificates
 setup_certificates() {
     print_status "Setting up certificates..."
     if [ ! -d "certs" ] || [ -z "$(ls -A certs 2>/dev/null)" ]; then
-        ./scripts/generate-certs.sh
+        ./generate-certs.sh
         print_success "Certificates generated"
     else
         print_success "Certificates already exist"
