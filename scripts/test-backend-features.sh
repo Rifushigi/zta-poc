@@ -1,7 +1,8 @@
 #!/bin/bash
 # scripts/test-backend-features.sh
 
-set -e
+# Source common test functions
+source "$(dirname "$0")/lib/test-helpers.sh"
 
 echo "🧪 Testing Backend Service Features..."
 
@@ -63,10 +64,7 @@ test_with_token() {
 }
 
 # Wait for backend service to be ready
-echo "⏳ Waiting for backend service to be ready..."
-until curl -s http://localhost:3000/health > /dev/null; do
-    sleep 2
-done
+wait_for_service "Backend" "http://localhost:3000/health"
 
 # Test 1: Health and Metrics endpoints
 echo ""
