@@ -58,7 +58,7 @@ setup_certificates() {
 setup_secrets() {
     if [ ! -f secrets/db_user.txt ]; then
         print_status "Setting up secrets..."
-        ./scripts/setup-secrets.sh
+        ./setup-secrets.sh
     else
         print_success "Secrets already configured"
     fi
@@ -77,11 +77,11 @@ deploy_core_services() {
 # Setup Keycloak
 setup_keycloak() {
     print_status "Setting up Keycloak realm and users..."
-    ./scripts/setup-keycloak.sh
+    ./setup-keycloak.sh
 }
 
 # Test deployment
 test_deployment() {
     print_status "Testing deployment..."
-    ./scripts/test-deployment.sh
+    ./test-deployment.sh
 } 
