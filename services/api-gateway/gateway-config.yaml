@@ -1,0 +1,100 @@
+_format_version: "2.1"
+
+services:
+  - name: backend-service
+    url: http://backend-service:3000
+    protocol: http
+    host: backend-service
+    port: 3000
+    connect_timeout: 5000
+    write_timeout: 5000
+    read_timeout: 5000
+    retries: 5
+
+routes:
+  - name: api-route
+    service: backend-service
+    protocols:
+      - https
+    paths:
+      - /api
+    strip_path: false
+    preserve_host: true
+
+plugins:
+  - name: jwt
+    config:
+      uri_param_names:
+        - jwt
+      cookie_names:
+        - jwt
+      header_names:
+        - Authorization
+      claims_to_verify:
+        - exp
+      key_claim_name: kid
+      secret_is_base64: false
+      anonymous: null
+      run_on_preflight: true
+      maximum_expiration: 0
+      cache_ttl: 0
+      consumer_claim: []
+      consumer_optional: false
+      issuer: http://keycloak:8080/realms/zero-trust
+      audience: myapp
+      algorithms:
+        - RS256
+      key:
+        - key: |
+            -----BEGIN PUBLIC KEY-----
+            # This will be replaced with actual JWKS from Keycloak
+            -----END PUBLIC KEY-----
+          key_type: RSA
+          kid: default
+
+  - name: opa
+    config:
+      host: opa
+      port: 8181
+      path: /v1/data/authz/allow
+      include_headers: true
+      include_body: false
+      timeout: 5000
+      keepalive: 60000
+      ssl_verify: false
+      ssl_cert: /etc/ssl/certs/client.crt
+      ssl_cert_key: /etc/ssl/private/client.key
+      ssl_ca_cert: /etc/ssl/certs/ca.crt
+
+  - name: prometheus
+    config:
+      status_codes: true
+      bandwidth: true
+      latency: true
+      upstream_health: true
+      http_requests: true
+      http_status_codes: true
+      latency_histogram_buckets:
+        - 0.005
+        - 0.01
+        - 0.025
+        - 0.05
+        - 0.075
+        - 0.1
+        - 0.25
+        - 0.5
+        - 0.75
+        - 1
+        - 2.5
+        - 5
+        - 7.5
+        - 10
+
+  - name: rate-limiting
+    config:
+      minute: 100
+      hour: 1000
+      day: 10000
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false 
