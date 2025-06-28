@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # Identity Provider
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.1
+    image: quay.io/keycloak/keycloak:26.2
     ports:
       - "8080:8080"
     networks:
