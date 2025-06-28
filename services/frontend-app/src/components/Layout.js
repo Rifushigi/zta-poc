@@ -91,7 +91,7 @@ const Layout = () => {
                 }}
             >
                 <Typography variant="h6" color="primary">
-                    Zero Trust PoC
+                    Zero Trust
                 </Typography>
             </Box>
             <List>
@@ -145,7 +145,7 @@ const Layout = () => {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                        {menuItems.find(item => item.path === location.pathname)?.text || 'Zero Trust PoC'}
+                        Zero Trust
                     </Typography>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

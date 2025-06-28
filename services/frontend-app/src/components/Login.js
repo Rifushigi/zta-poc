@@ -60,7 +60,7 @@ const Login = () => {
                                 }}
                             />
                             <Typography variant="h4" component="h1" gutterBottom>
-                                Zero Trust PoC
+                                Zero Trust
                             </Typography>
                             <Typography variant="body1" color="text.secondary">
                                 Secure Authentication Portal
