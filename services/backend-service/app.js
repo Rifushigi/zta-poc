@@ -139,15 +139,34 @@ const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Zero Trust Backend API',
+            title: 'Zero Trust API',
             version: '1.0.0',
-            description: 'API documentation for the Zero Trust PoC backend service.'
+            description: 'API documentation for the Zero Trust backend service.',
+            contact: {
+                name: 'Zero Trust Team',
+                email: 'team@zerotrust.com'
+            }
         },
         servers: [
-            { url: 'http://localhost:3000', description: 'Local server' }
-        ]
+            {
+                url: 'http://localhost:3000',
+                description: 'Development server'
+            }
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT'
+                }
+            }
+        },
+        security: [{
+            bearerAuth: []
+        }]
     },
-    apis: ['./app.js'],
+    apis: ['./routes/*.js', './app.js']
 };
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
