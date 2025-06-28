@@ -1,6 +1,4 @@
-## Implementation Guide: Zero Trust Architecture in Hybrid Cloud (Chapters 1–3)
-
-Follow these sequential steps to build your PoC. Each major task is numbered and broken down into clear substeps.
+## Implementation Guide: Zero Trust Architecture in Hybrid Cloud
 
 ### Core Zero Trust Principles (for reference)
 
@@ -158,5 +156,4 @@ After your PoC is deployed, verify each component and the end-to-end flow:
 
 ---
 
-Use these numbered steps as the AI agent’s execution plan. Each step is self‑contained and includes verification points to ensure reliability.
 
