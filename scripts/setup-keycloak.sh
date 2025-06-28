@@ -28,15 +28,15 @@ fi
 
 # Create realm
 echo "🏛️ Creating realm..."
-curl -s -X POST \
-  "http://localhost:8080/admin/realms" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "realm": "zero-trust",
     "enabled": true,
-    "displayName": "Zero Trust PoC"
-  }'
+    "displayName": "Zero Trust"
+  }' \
+  "http://localhost:8080/admin/realms"
 
 # Create client
 echo "Creating client..."

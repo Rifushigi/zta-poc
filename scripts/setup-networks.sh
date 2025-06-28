@@ -3,7 +3,7 @@
 
 set -e
 
-echo "Setting up Docker networks for Zero Trust PoC..."
+echo "Setting up Docker networks for Zero Trust..."
 
 # Create on-premises network
 if ! docker network ls | grep -q "on-prem-net"; then

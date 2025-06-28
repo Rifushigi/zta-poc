@@ -4,7 +4,7 @@
 # Source common test functions
 source "$(dirname "$0")/lib/test-helpers.sh"
 
-echo "🧪 Testing Zero Trust PoC deployment..."
+echo "�� Testing Zero Trust deployment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -153,7 +153,7 @@ test_endpoint "Grafana" "http://localhost:3001" "GET" "" "200"
 test_endpoint "Kibana" "http://localhost:5601" "GET" "" "200"
 
 echo ""
-echo -e "${GREEN}✅ Zero Trust PoC testing complete!${NC}"
+echo -e "${GREEN}✅ Zero Trust testing complete!${NC}"
 echo ""
 echo "📋 Test Summary:"
 echo "  - Health checks: All services responding"

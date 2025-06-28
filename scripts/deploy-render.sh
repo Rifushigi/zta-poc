@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 🚀 Render Deployment Script for Zero Trust PoC
+# 🚀 Render Deployment Script for Zero Trust
 # This script prepares your project for Render deployment
 
 set -e
 
-echo "🚀 Preparing Zero Trust PoC for Render deployment..."
+echo "🚀 Preparing Zero Trust for Render deployment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -165,7 +165,7 @@ show_instructions() {
     echo "   - Click 'New +' → 'Web Service'"
     echo "   - Connect your GitHub repository"
     echo "   - Configure:"
-    echo "     • Name: zero-trust-poc"
+    echo "     • Name: zero-trust"
     echo "     • Environment: Docker"
     echo "     • Build Command: docker-compose -f docker-compose.render.yml build"
     echo "     • Start Command: docker-compose -f docker-compose.render.yml up"
@@ -198,30 +198,35 @@ show_instructions() {
     echo "   - Backend: https://your-app-name.onrender.com/backend"
     echo "   - Monitoring: https://your-app-name.onrender.com/monitoring/grafana"
     echo ""
-    echo "📋 Use RENDER_CHECKLIST.md to track your progress"
-    echo "📖 See RENDER_DEPLOYMENT.md for detailed instructions"
-    echo ""
 }
 
 # Main execution
 main() {
-    echo "🚀 Zero Trust PoC - Render Deployment Preparation"
-    echo "=================================================="
+    echo "🚀 Zero Trust - Render Deployment Preparation"
+    echo "============================================="
     echo ""
     
+    # Check files
     check_files
+    
+    # Generate templates
     generate_env_template
     create_checklist
+    
+    # Show instructions
     show_instructions
     
-    print_success "🎉 Render deployment preparation complete!"
-    print_warning "⚠️  Remember to:"
-    echo "   - Push all changes to GitHub"
-    echo "   - Set up environment variables in Render"
-    echo "   - Configure Keycloak after deployment"
     echo ""
-    print_success "📚 Check RENDER_DEPLOYMENT.md for complete guide"
+    print_success "✅ Render deployment preparation complete!"
+    echo ""
+    echo "📋 Next Steps:"
+    echo "1. Review .env.render.template and RENDER_CHECKLIST.md"
+    echo "2. Push your code to GitHub"
+    echo "3. Follow the deployment instructions above"
+    echo "4. Configure environment variables in Render"
+    echo "5. Deploy and test your application"
+    echo ""
 }
 
 # Run main function
-main "$@" 
+main 

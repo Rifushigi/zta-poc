@@ -13,7 +13,7 @@ deploy_frontend() {
 # Show final status
 show_final_status() {
     echo ""
-    print_success "Zero Trust PoC deployment complete!"
+    print_success "Zero Trust deployment complete!"
     echo ""
     echo "🌐 Access URLs:"
     echo "=============="
@@ -45,8 +45,8 @@ show_final_status() {
 
 # Main execution
 main() {
-    echo "🚀 Zero Trust PoC Deployment"
-    echo "============================"
+    echo "🚀 Zero Trust Deployment"
+    echo "======================="
     echo ""
     
     # Pre-flight checks
