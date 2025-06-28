@@ -2,6 +2,8 @@
 
 A comprehensive architectural analysis of the Zero Trust Proof of Concept, covering design decisions, security principles, integration patterns, and operational considerations.
 
+> **🚀 For quick start and practical guidance, see [CODEBASE_OVERVIEW.md](./CODEBASE_OVERVIEW.md)**
+
 ---
 
 ## Table of Contents
@@ -27,6 +29,8 @@ A comprehensive architectural analysis of the Zero Trust Proof of Concept, cover
 This Zero Trust Architecture PoC demonstrates a comprehensive implementation of modern security principles in a hybrid cloud environment. The system enforces strict identity verification, continuous policy evaluation, and comprehensive monitoring across all components. The architecture is designed to eliminate implicit trust and provide granular, context-aware access control while maintaining operational efficiency and observability.
 
 The implementation showcases how traditional perimeter-based security can be replaced with identity-centric, policy-driven security that adapts to modern distributed computing environments. Each component is designed with security as a first principle, ensuring that trust is never assumed and always verified.
+
+> **📋 For practical implementation details and quick start guide, see [CODEBASE_OVERVIEW.md](./CODEBASE_OVERVIEW.md)**
 
 ---
 
