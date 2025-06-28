@@ -1,7 +1,8 @@
 #!/bin/bash
 # scripts/test-deployment.sh
 
-set -e
+# Source common test functions
+source "$(dirname "$0")/lib/test-helpers.sh"
 
 echo "🧪 Testing Zero Trust PoC deployment..."
 
@@ -63,46 +64,33 @@ test_with_mtls() {
 }
 
 # Wait for services to be ready
-echo "⏳ Waiting for services to be ready..."
-sleep 10
+wait_for_service "Keycloak" "http://localhost:8080/health"
+wait_for_service "OPA" "http://localhost:8181/health"
+wait_for_service "Backend" "http://localhost:3000/health"
+wait_for_service "Prometheus" "http://localhost:9090/-/healthy"
 
 # Test 1: Health checks
 echo ""
 echo "🔍 Testing health checks..."
-test_endpoint "Keycloak Health" "http://localhost:8080/health" "200"
-test_endpoint "OPA Health" "http://localhost:8181/health" "200"
-test_endpoint "Backend Health" "http://localhost:3000/health" "200"
-test_endpoint "Prometheus Health" "http://localhost:9090/-/healthy" "200"
+test_endpoint "Keycloak Health" "http://localhost:8080/health" "GET" "" "200"
+test_endpoint "OPA Health" "http://localhost:8181/health" "GET" "" "200"
+test_endpoint "Backend Health" "http://localhost:3000/health" "GET" "" "200"
+test_endpoint "Prometheus Health" "http://localhost:9090/-/healthy" "GET" "" "200"
 
 # Test 2: Get tokens
 echo ""
 echo "🔐 Testing token generation..."
-ADMIN_TOKEN=$(curl -s -X POST \
-  "http://localhost:8080/realms/zero-trust/protocol/openid-connect/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=myapp" \
-  -d "client_secret=EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa" \
-  -d "username=admin" \
-  -d "password=adminpass" \
-  -d "grant_type=password" | jq -r '.access_token')
+ADMIN_TOKEN=$(get_token "admin" "adminpass")
+USER_TOKEN=$(get_token "user" "userpass")
 
-USER_TOKEN=$(curl -s -X POST \
-  "http://localhost:8080/realms/zero-trust/protocol/openid-connect/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=myapp" \
-  -d "client_secret=EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa" \
-  -d "username=user" \
-  -d "password=userpass" \
-  -d "grant_type=password" | jq -r '.access_token')
-
-if [ "$ADMIN_TOKEN" != "null" ] && [ -n "$ADMIN_TOKEN" ]; then
+if [ -n "$ADMIN_TOKEN" ]; then
     echo -e "${GREEN}✅ Admin token generated${NC}"
 else
     echo -e "${RED}❌ Failed to generate admin token${NC}"
     exit 1
 fi
 
-if [ "$USER_TOKEN" != "null" ] && [ -n "$USER_TOKEN" ]; then
+if [ -n "$USER_TOKEN" ]; then
     echo -e "${GREEN}✅ User token generated${NC}"
 else
     echo -e "${RED}❌ Failed to generate user token${NC}"
@@ -112,43 +100,24 @@ fi
 # Test 3: OPA policy evaluation
 echo ""
 echo "🛡️ Testing OPA policy evaluation..."
-ADMIN_OPA_RESULT=$(curl -s -X POST \
-  "http://localhost:8181/v1/data/authz/allow" \
-  -H "Content-Type: application/json" \
-  -d "{\"input\": {\"token\": \"$ADMIN_TOKEN\", \"path\": \"/api/admin\"}}")
-
-USER_OPA_RESULT=$(curl -s -X POST \
-  "http://localhost:8181/v1/data/authz/allow" \
-  -H "Content-Type: application/json" \
-  -d "{\"input\": {\"token\": \"$USER_TOKEN\", \"path\": \"/api/data\"}}")
-
-if echo "$ADMIN_OPA_RESULT" | jq -e '.result == true' > /dev/null; then
-    echo -e "${GREEN}✅ Admin OPA policy evaluation passed${NC}"
-else
-    echo -e "${RED}❌ Admin OPA policy evaluation failed${NC}"
-fi
-
-if echo "$USER_OPA_RESULT" | jq -e '.result == true' > /dev/null; then
-    echo -e "${GREEN}✅ User OPA policy evaluation passed${NC}"
-else
-    echo -e "${RED}❌ User OPA policy evaluation failed${NC}"
-fi
+test_opa_policy "$ADMIN_TOKEN" "/api/admin" "true"
+test_opa_policy "$USER_TOKEN" "/api/data" "true"
 
 # Test 4: API Gateway access
 echo ""
 echo "🚪 Testing API Gateway access..."
 
 # Test admin access to admin endpoint
-test_with_token "Admin access to /api/admin" "https://localhost:8443/api/admin" "$ADMIN_TOKEN" "200"
+test_with_token "Admin access to /api/admin" "https://localhost:8443/api/admin" "GET" "$ADMIN_TOKEN" "" "200"
 
 # Test user access to data endpoint
-test_with_token "User access to /api/data" "https://localhost:8443/api/data" "$USER_TOKEN" "200"
+test_with_token "User access to /api/data" "https://localhost:8443/api/data" "GET" "$USER_TOKEN" "" "200"
 
 # Test user access to admin endpoint (should fail)
-test_with_token "User access to /api/admin (should fail)" "https://localhost:8443/api/admin" "$USER_TOKEN" "403"
+test_with_token "User access to /api/admin (should fail)" "https://localhost:8443/api/admin" "GET" "$USER_TOKEN" "" "403"
 
 # Test access without token (should fail)
-test_endpoint "No token access (should fail)" "https://localhost:8443/api/data" "401"
+test_endpoint "No token access (should fail)" "https://localhost:8443/api/data" "GET" "" "401"
 
 # Test 5: mTLS verification
 echo ""
@@ -179,9 +148,9 @@ fi
 # Test 7: Monitoring
 echo ""
 echo "📊 Testing monitoring stack..."
-test_endpoint "Prometheus" "http://localhost:9090" "200"
-test_endpoint "Grafana" "http://localhost:3001" "200"
-test_endpoint "Kibana" "http://localhost:5601" "200"
+test_endpoint "Prometheus" "http://localhost:9090" "GET" "" "200"
+test_endpoint "Grafana" "http://localhost:3001" "GET" "" "200"
+test_endpoint "Kibana" "http://localhost:5601" "GET" "" "200"
 
 echo ""
 echo -e "${GREEN}✅ Zero Trust PoC testing complete!${NC}"
