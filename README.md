@@ -4,7 +4,7 @@ A comprehensive Zero Trust Architecture implementation for hybrid cloud environm
 
 ## 🏗️ Architecture Overview
 
-This PoC implements a complete Zero Trust stack with the following components:
+This system implements a complete Zero Trust stack with the following components:
 
 ### Core Services
 - **Keycloak**: Identity and Access Management (IAM)
