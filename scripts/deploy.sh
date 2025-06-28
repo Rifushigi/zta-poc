@@ -7,7 +7,7 @@ source "$(dirname "$0")/lib/common.sh"
 # Deploy frontend
 deploy_frontend() {
     print_status "Deploying frontend application..."
-    ./scripts/setup-frontend.sh prod
+    ./setup-frontend.sh prod
 }
 
 # Show final status
