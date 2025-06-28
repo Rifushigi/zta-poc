@@ -1,4 +1,4 @@
-# Zero Trust Architecture Proof of Concept
+# Zero Trust Architecture
 
 A comprehensive Zero Trust Architecture implementation for hybrid cloud environments, featuring identity-based access control, policy enforcement, and comprehensive monitoring.
 
