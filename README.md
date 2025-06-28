@@ -37,7 +37,7 @@ This system implements a complete Zero Trust stack with the following components
 ### 1. Setup and Deploy
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone <https://github.com/Rifushigi/zta-poc.git>
 cd zero-trust-poc
 
 # Generate certificates and setup networks
