@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # Main application service (exposed to Render)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.render
+    ports:
+      - "10000:10000"  # Render's default port
+    environment:
+      # Database (use Render's managed PostgreSQL)
+      DATABASE_URL: ${DATABASE_URL}
+      # Keycloak
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      # Backend
+      BACKEND_URL: ${BACKEND_URL}
+      # Monitoring
+      PROMETHEUS_URL: ${PROMETHEUS_URL}
+      GRAFANA_URL: ${GRAFANA_URL}
+    depends_on:
+      - keycloak
+      - opa
+      - api-gateway
+      - backend-service
+      - postgres
+      - monitoring-stack
+
+  # Identity Provider
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-securepassword}
+      KC_DB: postgres
+      KC_DB_URL: ${DATABASE_URL}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+    command: start --optimized
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Policy Engine
+  opa:
+    image: openpolicyagent/opa:1.5.1
+    volumes:
+      - ./policies/v1:/policies
+    entrypoint: ["opa"]
+    command:
+      [
+        "run",
+        "--server",
+        "--log-level=debug",
+        "--addr=0.0.0.0:8181",
+        "/policies",
+      ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  api-gateway:
+    image: kong:3.4
+    environment:
+      KONG_DATABASE: "off"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+    volumes:
+      - ./services/api-gateway/gateway-config.yaml:/kong.yml:ro
+    depends_on:
+      - keycloak
+      - opa
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Service
+  backend-service:
+    build:
+      context: ./services/backend-service
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - postgres
+
+  # PostgreSQL (local for development, use Render's managed service in production)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-backend}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-backendpass}
+      POSTGRES_DB: ${POSTGRES_DB:-zerotrust}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-backend}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Stack (simplified for Render)
+  monitoring-stack:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data: 

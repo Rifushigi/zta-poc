@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  frontend-dev:
+    build:
+      context: ./services/frontend-app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./services/frontend-app/src:/app/src
+      - ./services/frontend-app/public:/app/public
+      - /app/node_modules
+    networks:
+      - on-prem-net
+      - cloud-net
+    depends_on:
+      - keycloak
+      - api-gateway
+      - backend-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  on-prem-net:
+    external: true
+  cloud-net:
+    external: true 
