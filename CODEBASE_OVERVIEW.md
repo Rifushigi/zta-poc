@@ -1,6 +1,6 @@
-# Zero Trust Architecture PoC – Codebase Overview
+# Zero Trust Architecture – Codebase Overview
 
-A practical guide for onboarding and quick reference to the Zero Trust PoC codebase, including architecture, directory structure, service interactions, and getting started.
+A practical guide for onboarding and quick reference to the Zero Trust codebase, including architecture, directory structure, service interactions, and getting started.
 
 > **📖 For detailed architectural analysis and design decisions, see [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md)**
 
@@ -50,7 +50,7 @@ A practical guide for onboarding and quick reference to the Zero Trust PoC codeb
 
 ## 2. Architecture Overview
 
-This PoC demonstrates a modern Zero Trust stack for hybrid cloud environments. It enforces strict identity, policy, and network controls, and provides full observability.
+This Zero Trust implementation demonstrates a modern Zero Trust stack for hybrid cloud environments. It enforces strict identity, policy, and network controls, and provides full observability.
 
 ### High-Level Diagram
 ```mermaid

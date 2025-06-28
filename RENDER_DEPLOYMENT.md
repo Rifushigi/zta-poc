@@ -1,11 +1,12 @@
-# 🚀 Render Deployment Guide
+# 🚀 Render Deployment Guide for Zero Trust
 
-This guide will help you deploy your Zero Trust Architecture PoC on Render.
+This guide provides step-by-step instructions for deploying the Zero Trust architecture on Render.com, a modern cloud platform that supports Docker deployments.
 
 ## 📋 Prerequisites
 
-- GitHub repository with your Zero Trust PoC code
-- Render account (free tier available)
+- GitHub repository with your Zero Trust code
+- Render.com account
+- Basic understanding of Docker and environment variables
 - PostgreSQL database (Render's managed service recommended)
 
 ## 🎯 Deployment Options
@@ -252,7 +253,7 @@ curl https://your-app-name.onrender.com/auth/health
 
 - **Render Documentation**: https://render.com/docs
 - **Render Community**: https://community.render.com
-- **Zero Trust PoC Issues**: Check your repository issues
+- **Zero Trust Issues**: Check your repository issues
 
 ---
 
