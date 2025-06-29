@@ -48,6 +48,7 @@ cd zta-poc
 ```
 
 ### 2. Access Services
+- **Frontend**: https://localhost:8081
 - **API Gateway**: https://localhost:8443
 - **Keycloak Admin**: http://localhost:8080 (admin/admin)
 - **Grafana**: http://localhost:3001 (admin/admin)
