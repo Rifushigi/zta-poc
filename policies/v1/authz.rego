@@ -14,8 +14,8 @@ jwt_decoded := io.jwt.decode_verify(
   {
     "cert": jwt_keys,
     "alg": "RS256",
-    "iss": "http://keycloak:8080/realms/zero-trust",
-    "aud": ["myapp"]
+    "iss": "http://localhost:8080/realms/zero-trust",
+    "aud": ["account", "myapp"]
   }
 )
 
