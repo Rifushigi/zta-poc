@@ -40,7 +40,7 @@ A practical guide for onboarding and quick reference to the Zero Trust codebase,
 ```
 
 ### Access Services
-- **Frontend**: https://localhost:8080
+- **Frontend**: https://localhost:8081
 - **Keycloak Admin**: http://localhost:8080 (admin/admin)
 - **API Gateway**: https://localhost:8443
 - **Grafana**: http://localhost:3001 (admin/admin)
