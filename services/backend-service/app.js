@@ -20,7 +20,7 @@ const { Sequelize } = require('sequelize');
 const Item = require('./models/item');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // Database connection
 const sequelize = new Sequelize(
@@ -58,7 +58,7 @@ app.use(limiter);
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:4000'],
     credentials: true
 }));
 
@@ -149,7 +149,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: 'http://localhost:4000',
                 description: 'Development server'
             }
         ],
