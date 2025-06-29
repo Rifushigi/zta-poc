@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for sequelize-cli)
-RUN npm ci
+RUN npm install
 
 # Copy application code
 COPY . .
