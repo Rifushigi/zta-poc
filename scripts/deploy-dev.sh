@@ -7,7 +7,7 @@ source "$(dirname "$0")/lib/common.sh"
 # Deploy frontend in development mode
 deploy_frontend_dev() {
     print_status "Deploying frontend in development mode..."
-    docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml up -d frontend-dev
+    docker-compose -f ../docker-compose.yml -f ../docker-compose.frontend-dev.yml up -d frontend-dev
     
     # Wait for frontend to be ready
     print_status "Waiting for frontend to be ready..."
