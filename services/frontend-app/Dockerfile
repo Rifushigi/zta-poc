@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --omit=dev && npm cache clean --force
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm install --legacy-peer-deps --omit=dev
 
 # Copy source code
 COPY . .
@@ -36,12 +36,12 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Create SSL directory
 RUN mkdir -p /etc/nginx/ssl
 
-# Expose port
+# Expose ports
 EXPOSE 80 443
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f -k https://localhost/health || exit 1
+  CMD curl -f http://localhost/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"] 
