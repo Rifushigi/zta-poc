@@ -4,7 +4,7 @@
 # Source common test functions
 source "$(dirname "$0")/lib/test-helpers.sh"
 
-echo "�� Testing Zero Trust deployment..."
+echo "🧪 Testing Zero Trust deployment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,70 +12,19 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Test function
-test_endpoint() {
-    local name="$1"
-    local url="$2"
-    local expected_status="$3"
-    
-    echo -n "Testing $name... "
-    if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "$expected_status"; then
-        echo -e "${GREEN}✅ PASS${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ FAIL${NC}"
-        return 1
-    fi
-}
-
-# Test function with token
-test_with_token() {
-    local name="$1"
-    local url="$2"
-    local token="$3"
-    local expected_status="$4"
-    
-    echo -n "Testing $name... "
-    if curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $token" "$url" | grep -q "$expected_status"; then
-        echo -e "${GREEN}✅ PASS${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ FAIL${NC}"
-        return 1
-    fi
-}
-
-# Test function with mTLS
-test_with_mtls() {
-    local name="$1"
-    local url="$2"
-    local cert="$3"
-    local key="$4"
-    local expected_status="$5"
-    
-    echo -n "Testing $name... "
-    if curl -s -o /dev/null -w "%{http_code}" --cert "$cert" --key "$key" --cacert certs/ca.crt "$url" | grep -q "$expected_status"; then
-        echo -e "${GREEN}✅ PASS${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ FAIL${NC}"
-        return 1
-    fi
-}
-
 # Wait for services to be ready
-wait_for_service "Keycloak" "http://localhost:8080/health"
-wait_for_service "OPA" "http://localhost:8181/health"
-wait_for_service "Backend" "http://localhost:3000/health"
+wait_for_service "Keycloak" "http://localhost:8080/"
+wait_for_service "OPA" "https://localhost:8181/health"
+wait_for_service "Backend" "http://localhost:4000/health"
 wait_for_service "Prometheus" "http://localhost:9090/-/healthy"
 
 # Test 1: Health checks
 echo ""
 echo "🔍 Testing health checks..."
-test_endpoint "Keycloak Health" "http://localhost:8080/health" "GET" "" "200"
-test_endpoint "OPA Health" "http://localhost:8181/health" "GET" "" "200"
-test_endpoint "Backend Health" "http://localhost:3000/health" "GET" "" "200"
-test_endpoint "Prometheus Health" "http://localhost:9090/-/healthy" "GET" "" "200"
+test_endpoint "Keycloak Health" "http://localhost:8080/" "302"
+test_endpoint "OPA Health" "https://localhost:8181/health" "200"
+test_endpoint "Backend Health" "http://localhost:4000/health" "200"
+test_endpoint "Prometheus Health" "http://localhost:9090/-/healthy" "200"
 
 # Test 2: Get tokens
 echo ""
@@ -108,16 +57,16 @@ echo ""
 echo "🚪 Testing API Gateway access..."
 
 # Test admin access to admin endpoint
-test_with_token "Admin access to /api/admin" "https://localhost:8443/api/admin" "GET" "$ADMIN_TOKEN" "" "200"
+test_with_token "Admin access to /api/admin" "https://localhost:8443/api/admin" "$ADMIN_TOKEN" "200"
 
 # Test user access to data endpoint
-test_with_token "User access to /api/data" "https://localhost:8443/api/data" "GET" "$USER_TOKEN" "" "200"
+test_with_token "User access to /api/data" "https://localhost:8443/api/data" "$USER_TOKEN" "200"
 
 # Test user access to admin endpoint (should fail)
-test_with_token "User access to /api/admin (should fail)" "https://localhost:8443/api/admin" "GET" "$USER_TOKEN" "" "403"
+test_with_token "User access to /api/admin (should fail)" "https://localhost:8443/api/admin" "$USER_TOKEN" "403"
 
 # Test access without token (should fail)
-test_endpoint "No token access (should fail)" "https://localhost:8443/api/data" "GET" "" "401"
+test_endpoint "No token access (should fail)" "https://localhost:8443/api/data" "401"
 
 # Test 5: mTLS verification
 echo ""
@@ -148,9 +97,9 @@ fi
 # Test 7: Monitoring
 echo ""
 echo "📊 Testing monitoring stack..."
-test_endpoint "Prometheus" "http://localhost:9090" "GET" "" "200"
-test_endpoint "Grafana" "http://localhost:3001" "GET" "" "200"
-test_endpoint "Kibana" "http://localhost:5601" "GET" "" "200"
+test_endpoint "Prometheus" "http://localhost:9090" "200"
+test_endpoint "Grafana" "http://localhost:3001" "200"
+test_endpoint "Kibana" "http://localhost:5601" "200"
 
 echo ""
 echo -e "${GREEN}✅ Zero Trust testing complete!${NC}"
