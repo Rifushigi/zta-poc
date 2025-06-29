@@ -3,41 +3,11 @@
 # Zero Trust Frontend Setup Script
 set -e
 
+# Source common functions and utilities
+source "$(dirname "$0")/lib/common.sh"
+
 echo "🚀 Zero Trust Frontend Setup & Deployment"
 echo "=========================================="
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if Docker is running
-check_docker() {
-    if ! docker info > /dev/null 2>&1; then
-        print_error "Docker is not running. Please start Docker and try again."
-        exit 1
-    fi
-    print_success "Docker is running"
-}
 
 # Check if Docker Compose is available
 check_docker_compose() {
@@ -154,8 +124,8 @@ show_status() {
     echo ""
     echo "🌐 Access URLs:"
     echo "=============="
-    echo "Frontend (Production): https://localhost:8080"
-    echo "Frontend (Development): http://localhost:3000"
+    echo "Frontend (HTTP - Recommended): http://localhost:8082"
+    echo "Frontend (HTTPS): https://localhost:8081"
     echo "Keycloak Admin: http://localhost:8080"
     echo "Grafana: http://localhost:3001"
     echo "Prometheus: http://localhost:9090"
