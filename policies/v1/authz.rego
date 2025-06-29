@@ -1,47 +1,49 @@
 package authz
 
-# Fetch Keycloak JWKS
+import input
+
+# Fetch JWKS
 jwt_keys := http.send({
   "url": "http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs",
   "method": "GET"
 }).body.keys
 
 # Decode and verify JWT
-decoded := io.jwt.decode(input.token)
-verified := io.jwt.verify(decoded, jwt_keys)
+jwt_decoded := io.jwt.decode_verify(
+  input.token,
+  {
+    "cert": jwt_keys,
+    "alg": "RS256",
+    "iss": "http://keycloak:8080/realms/zero-trust",
+    "aud": ["myapp"]
+  }
+)
 
-# Extract user information from JWT
-user_info := {
-  "username": decoded.payload.preferred_username,
-  "roles": decoded.payload.realm_access.roles,
-  "email": decoded.payload.email
-}
+# Extract verification status and claims
+jwt_verified := jwt_decoded[0]
+jwt_header := jwt_decoded[1]
+jwt_claims := jwt_decoded[2]
 
-# Policy: Allow if JWT valid + role check
+# Main allow rule: ensure token is verified, then check roles
 allow if {
-  verified
-  decoded.payload.iss == "http://keycloak:8080/realms/zero-trust"
-  decoded.payload.aud == "myapp"
-  has_required_role(input.path, user_info.roles)
+  jwt_verified == true
+  user_roles := jwt_claims.realm_access.roles
+  has_required_role(input.path, user_roles)
 }
 
-# Check if user has required role for the path
-has_required_role(path, roles) {
-  # Admin endpoints require admin role
+# Role-based checks
+has_required_role(path, roles) if {
   startswith(path, "/api/admin")
   contains(roles, "admin")
 }
 
-has_required_role(path, roles) {
-  # Regular API endpoints require user role
+has_required_role(path, roles) if {
   startswith(path, "/api/data")
   contains(roles, "user")
 }
 
-has_required_role(path, roles) {
-  # Health check doesn't require specific role
+has_required_role(path, roles) if {
   path == "/health"
 }
 
-# Default deny
-allow = false
+default allow = false
