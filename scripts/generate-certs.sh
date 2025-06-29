@@ -3,7 +3,7 @@
 
 set -e
 
-CERT_DIR="certs"
+CERT_DIR="../certs"
 mkdir -p $CERT_DIR
 
 echo "Generating CA certificate and key..."
