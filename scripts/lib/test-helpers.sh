@@ -14,17 +14,18 @@ NC='\033[0m' # No Color
 test_endpoint() {
     local name="$1"
     local url="$2"
-    local method="$3"
-    local data="$4"
-    local expected_status="$5"
+    local expected_status="$3"
     
     echo -n "Testing $name... "
     
-    if [ -n "$data" ]; then
-        response=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" -H "Content-Type: application/json" -d "$data" "$url")
-    else
-        response=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$url")
+    # Determine if we need to use HTTPS
+    local curl_opts=""
+    if [[ "$url" == https://* ]]; then
+        curl_opts="-k"
     fi
+    
+    response=$(curl -s -o /dev/null -w "%{http_code}" $curl_opts "$url")
+    echo "DEBUG: $name - got $response, expected $expected_status"  # DEBUG
     
     if [ "$response" = "$expected_status" ]; then
         echo -e "${GREEN}✅ PASS${NC}"
@@ -87,7 +88,14 @@ wait_for_service() {
     
     echo "⏳ Waiting for $service_name to be ready..."
     local attempts=0
-    until curl -s "$url" > /dev/null 2>&1; do
+    
+    # Determine if we need to use HTTPS
+    local curl_opts=""
+    if [[ "$url" == https://* ]]; then
+        curl_opts="-k"
+    fi
+    
+    until curl -s $curl_opts "$url" > /dev/null 2>&1; do
         attempts=$((attempts + 1))
         if [ $attempts -ge $max_attempts ]; then
             echo -e "${RED}❌ $service_name failed to start after $max_attempts attempts${NC}"
@@ -129,8 +137,8 @@ test_opa_policy() {
     local path="$2"
     local expected_result="$3"
     
-    local result=$(curl -s -X POST \
-      "http://localhost:8181/v1/data/authz/allow" \
+    local result=$(curl -s -k -X POST \
+      "https://localhost:8181/v1/data/authz/allow" \
       -H "Content-Type: application/json" \
       -d "{\"input\": {\"token\": \"$token\", \"path\": \"$path\"}}")
     
@@ -139,6 +147,7 @@ test_opa_policy() {
         return 0
     else
         echo -e "${RED}❌ OPA policy evaluation failed${NC}"
+        echo "DEBUG: OPA response: $result" >&2
         return 1
     fi
 } 
