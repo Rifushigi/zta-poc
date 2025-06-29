@@ -7,20 +7,20 @@ services:
     networks:
       - on-prem-net
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: securepassword
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: securepassword
     command: start-dev
     volumes:
       - ./certs:/etc/ssl/certs:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   # Policy Engine
   opa:
-    image: openpolicyagent/opa:1.5.1
+    image: openpolicyagent/opa:latest
     ports:
       - "8181:8181"
     volumes:
@@ -40,7 +40,7 @@ services:
     networks:
       - on-prem-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:8181/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -86,7 +86,7 @@ services:
       context: ./services/backend-service
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "4000:4000"
     networks:
       - cloud-net
     environment:
@@ -97,7 +97,7 @@ services:
       DB_PASSWORD: backendpass
       DB_NAME: zerotrust
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -244,7 +244,8 @@ services:
       context: ./services/frontend-app
       dockerfile: Dockerfile
     ports:
-      - "8080:443"
+      - "8082:80"   # HTTP (primary for development)
+      - "8081:443"  # HTTPS (optional)
     networks:
       - on-prem-net
       - cloud-net
@@ -255,7 +256,7 @@ services:
       - api-gateway
       - backend-service
     healthcheck:
-      test: ["CMD", "curl", "-f", "-k", "https://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
