@@ -20,7 +20,7 @@ scrape_configs:
 
   - job_name: 'backend-service'
     static_configs:
-      - targets: ['backend-service:3000']
+      - targets: ['backend-service:4000']
     metrics_path: /metrics
     scrape_interval: 10s
 
@@ -29,6 +29,9 @@ scrape_configs:
       - targets: ['opa:8181']
     metrics_path: /metrics
     scrape_interval: 10s
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
 
   - job_name: 'keycloak'
     static_configs:
