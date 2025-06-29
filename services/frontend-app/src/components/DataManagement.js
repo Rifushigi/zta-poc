@@ -32,7 +32,7 @@ import {
     Refresh
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
 const DataManagement = () => {
