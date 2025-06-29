@@ -34,7 +34,7 @@ import {
     Schedule
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
 const AdminPanel = () => {
