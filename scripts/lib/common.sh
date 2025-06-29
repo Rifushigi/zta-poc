@@ -46,7 +46,7 @@ setup_networks() {
 # Generate certificates
 setup_certificates() {
     print_status "Setting up certificates..."
-    if [ ! -d "certs" ] || [ -z "$(ls -A certs 2>/dev/null)" ]; then
+    if [ ! -d "../certs" ] || [ -z "$(ls -A ../certs 2>/dev/null)" ]; then
         ./generate-certs.sh
         print_success "Certificates generated"
     else
