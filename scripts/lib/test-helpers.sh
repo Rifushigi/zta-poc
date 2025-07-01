@@ -25,7 +25,6 @@ test_endpoint() {
     fi
     
     response=$(curl -s -o /dev/null -w "%{http_code}" $curl_opts "$url")
-    echo "DEBUG: $name - got $response, expected $expected_status"  # DEBUG
     
     if [ "$response" = "$expected_status" ]; then
         echo -e "${GREEN}✅ PASS${NC}"
@@ -137,10 +136,24 @@ test_opa_policy() {
     local path="$2"
     local expected_result="$3"
     
-    local result=$(curl -s -k -X POST \
-      "https://localhost:8181/v1/data/authz/allow" \
+    # Use HTTP for dev, HTTPS for prod
+    local opa_url
+    if [[ "$NODE_ENV" == "development" || "$DEV_MODE" == "1" ]]; then
+        opa_url="http://localhost:8181/v1/data/authz/allow"
+        local curl_opts=""
+    else
+        opa_url="https://localhost:8181/v1/data/authz/allow"
+        local curl_opts="-k"
+    fi
+
+    # Use jq to build the JSON safely
+    local input_json
+    input_json=$(jq -n --arg token "$token" --arg path "$path" '{input: {token: $token, path: $path}}')
+
+    local result=$(curl -s $curl_opts -X POST \
+      "$opa_url" \
       -H "Content-Type: application/json" \
-      -d "{\"input\": {\"token\": \"$token\", \"path\": \"$path\"}}")
+      -d "$input_json")
     
     if echo "$result" | jq -e ".result == $expected_result" > /dev/null; then
         echo -e "${GREEN}✅ OPA policy evaluation passed${NC}"
