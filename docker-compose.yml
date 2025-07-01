@@ -26,6 +26,7 @@ services:
     volumes:
       - ./policies/v1:/policies
       - ./certs:/etc/ssl/certs:ro
+      - ./opa-config.yaml:/config/opa-config.yaml
     entrypoint: ["opa"]
     command:
       [
@@ -33,8 +34,7 @@ services:
         "--server",
         "--log-level=debug",
         "--addr=0.0.0.0:8181",
-        "--tls-cert-file=/etc/ssl/certs/opa.crt",
-        "--tls-private-key-file=/etc/ssl/certs/opa.key",
+        "--config-file=/config/opa-config.yaml",
         "/policies",
       ]
     networks:
