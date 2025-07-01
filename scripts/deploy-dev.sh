@@ -79,6 +79,7 @@ main() {
     deploy_frontend_dev
     
     # Test phase
+    export DEV_MODE=1
     test_deployment
     
     # Show results
