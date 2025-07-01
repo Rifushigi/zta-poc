@@ -55,25 +55,56 @@ curl -s -X POST \
     "protocol": "openid-connect"
   }'
 
+# Get client ID
+echo "Fetching client ID..."
+CLIENT_ID=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clientId=myapp" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+echo "==============================="
+echo "✅ Client successfully created!"
+echo "Client ID: $CLIENT_ID"
+echo "==============================="
+
+# Add audience mapper
+echo "Adding audience mapper..."
+curl -s -X POST \
+  "http://localhost:8080/admin/realms/zero-trust/clients/$CLIENT_ID/protocol-mappers/models" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "audience",
+    "protocol": "openid-connect",
+    "protocolMapper": "oidc-audience-mapper",
+    "config": {
+      "included.client.audience": "myapp",
+      "id.token.claim": "true",
+      "access.token.claim": "true"
+    }
+  }'
+  echo
+
 # Create roles
 echo "👥 Creating roles..."
-curl -s -X POST \
+ROLE_ADMIN_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/roles" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name": "admin", "description": "Administrator role"}'
+  -d '{"name": "admin", "description": "Administrator role"}')
+echo "$ROLE_ADMIN_RESPONSE"
+echo
 
-curl -s -X POST \
+ROLE_USER_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/roles" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name": "user", "description": "Regular user role"}'
+  -d '{"name": "user", "description": "Regular user role"}')
+echo "$ROLE_USER_RESPONSE"
+echo
 
 # Create users
 echo "👤 Creating users..."
 
 # Create admin user
-curl -s -X POST \
+ADMIN_USER_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/users" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -88,7 +119,9 @@ curl -s -X POST \
       "value": "adminpass",
       "temporary": false
     }]
-  }'
+  }')
+echo "$ADMIN_USER_RESPONSE"
+echo
 
 # Get admin user ID
 ADMIN_USER_ID=$(curl -s \
@@ -107,7 +140,7 @@ curl -s -X POST \
   -d "[{\"id\":\"$ADMIN_ROLE_ID\",\"name\":\"admin\"}]"
 
 # Create regular user
-curl -s -X POST \
+USER_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/users" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -122,7 +155,9 @@ curl -s -X POST \
       "value": "userpass",
       "temporary": false
     }]
-  }'
+  }')
+echo "$USER_RESPONSE"
+echo
 
 # Get user ID
 USER_ID=$(curl -s \
