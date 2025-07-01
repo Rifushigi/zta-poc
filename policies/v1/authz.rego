@@ -22,8 +22,14 @@ jwt_decoded := io.jwt.decode_verify(
 {
     "cert": jwt_keys,
     "alg": "RS256",
-    "iss": "http://localhost:8080/realms/zero-trust"
+    "iss": "http://keycloak:8080/realms/zero-trust"
 })
+
+jwt_kid := io.jwt.decode(input.token)[1].header.kid
+debug_kid = jwt_kid
+debug_jwks_keys = jwt_keys
+
+debug_jwt_decoded = jwt_decoded
 
 # Extract verification status and claims
 jwt_verified := jwt_decoded[0]
@@ -100,10 +106,13 @@ debug_all = {
   "jwt_decoded": jwt_decoded,
   "jwt_verified": jwt_verified,
   "jwt_claims": jwt_claims,
+  "jwt_kid": jwt_kid,
+  "jwks_keys": jwt_keys,
   "user_roles": user_roles,
   "valid_audience_combined": valid_audience_combined,
   "input_path": input.path,
-  "has_required_role": has_required_role(input.path, user_roles)
+  "has_required_role": has_required_role(input.path, user_roles),
+  "input_token": input.token
 }
 
 input_token_debug = input.token
