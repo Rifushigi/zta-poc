@@ -22,6 +22,8 @@ This guide covers automated deployment of the Zero Trust Frontend application us
 ./scripts/setup-frontend.sh dev
 ```
 
+> **Note:** In development mode, all services (Frontend, API Gateway, OPA, Keycloak, Backend) use HTTP only. No HTTPS is used in dev for easier local testing.
+
 ## 📋 Prerequisites
 
 - Docker and Docker Compose installed
