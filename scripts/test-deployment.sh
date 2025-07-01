@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Wait for services to be ready
 wait_for_service "Keycloak" "http://localhost:8080/"
-wait_for_service "OPA" "https://localhost:8181/health"
+wait_for_service "OPA" "http://localhost:8181/health"
 wait_for_service "Backend" "http://localhost:4000/health"
 wait_for_service "Prometheus" "http://localhost:9090/-/healthy"
 
@@ -22,7 +22,7 @@ wait_for_service "Prometheus" "http://localhost:9090/-/healthy"
 echo ""
 echo "🔍 Testing health checks..."
 test_endpoint "Keycloak Health" "http://localhost:8080/" "302"
-test_endpoint "OPA Health" "https://localhost:8181/health" "200"
+test_endpoint "OPA Health" "http://localhost:8181/health" "200"
 test_endpoint "Backend Health" "http://localhost:4000/health" "200"
 test_endpoint "Prometheus Health" "http://localhost:9090/-/healthy" "200"
 
@@ -57,16 +57,16 @@ echo ""
 echo "🚪 Testing API Gateway access..."
 
 # Test admin access to admin endpoint
-test_with_token "Admin access to /api/admin" "https://localhost:8443/api/admin" "$ADMIN_TOKEN" "200"
+test_with_token "Admin access to /api/admin" "http://localhost:8000/api/admin" "GET" "$ADMIN_TOKEN" "" "200"
 
 # Test user access to data endpoint
-test_with_token "User access to /api/data" "https://localhost:8443/api/data" "$USER_TOKEN" "200"
+test_with_token "User access to /api/data" "http://localhost:8000/api/data" "GET" "$USER_TOKEN" "" "200"
 
 # Test user access to admin endpoint (should fail)
-test_with_token "User access to /api/admin (should fail)" "https://localhost:8443/api/admin" "$USER_TOKEN" "403"
+test_with_token "User access to /api/admin (should fail)" "http://localhost:8000/api/admin" "GET" "$USER_TOKEN" "" "403"
 
 # Test access without token (should fail)
-test_endpoint "No token access (should fail)" "https://localhost:8443/api/data" "401"
+test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "401"
 
 # Test 5: mTLS verification
 echo ""
