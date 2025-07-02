@@ -80,7 +80,6 @@ curl -s -X POST \
       "access.token.claim": "true"
     }
   }'
-  echo
 
 # Create roles
 echo "👥 Creating roles..."
@@ -90,7 +89,6 @@ ROLE_ADMIN_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"name": "admin", "description": "Administrator role"}')
 echo "$ROLE_ADMIN_RESPONSE"
-echo
 
 ROLE_USER_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/roles" \
@@ -98,7 +96,6 @@ ROLE_USER_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{"name": "user", "description": "Regular user role"}')
 echo "$ROLE_USER_RESPONSE"
-echo
 
 # Create users
 echo "👤 Creating users..."
@@ -121,7 +118,6 @@ ADMIN_USER_RESPONSE=$(curl -s -X POST \
     }]
   }')
 echo "$ADMIN_USER_RESPONSE"
-echo
 
 # Get admin user ID
 ADMIN_USER_ID=$(curl -s \
@@ -157,7 +153,6 @@ USER_RESPONSE=$(curl -s -X POST \
     }]
   }')
 echo "$USER_RESPONSE"
-echo
 
 # Get user ID
 USER_ID=$(curl -s \
