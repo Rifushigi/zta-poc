@@ -12,6 +12,7 @@ services:
     command: start-dev
     volumes:
       - ./certs:/etc/ssl/certs:ro
+      - keycloak_data:/opt/keycloak/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 30s
@@ -288,4 +289,5 @@ volumes:
   elasticsearch_data:
   grafana_data:
   postgres_data:
-  alertmanager_data: 
+  alertmanager_data:
+  keycloak_data: 
