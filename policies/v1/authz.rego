@@ -134,8 +134,11 @@ allow if user_is_admin
 allow if user_is_user
 
 # Debug trace for testing
-debug := {
-    "jwks_keys": jwks_keys,
+trace := {
+    "jwt_signature_valid": jwt_signature_valid,
+    "valid_issuer": valid_issuer,
+    "valid_audience": valid_audience,
+    "jwt_verified": jwt_verified,
     "user_roles": [r | r := user_roles[_]],
     "is_health_check": is_health_check
 } if input.token
