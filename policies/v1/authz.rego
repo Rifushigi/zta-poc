@@ -1,101 +1,141 @@
 package authz
 
-import input
-
 default allow = false
 
-# Decode JWT parts if token exists
-jwt_parts := io.jwt.decode(input.token) if input.token
-jwt_header := jwt_parts[1] if jwt_parts
-jwt_claims := jwt_parts[2] if jwt_parts
-jwt_kid := jwt_header.kid if jwt_header
+# Helper function to safely extract claim fields
+get_claim(claims, key, def) = val if {
+    is_object(claims)
+    val := object.get(claims, key, def)
+}
+get_claim(claims, key, def) = def if {
+    not is_object(claims)
+}
 
-# Fetch JWKS keys dynamically
-jwks_keys := [k | 
+# Dynamically fetch JWKS keys
+jwks_keys := [k |
     jwks_resp := http.send({
         "url": "http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs",
         "method": "GET"
-    });
-    jwks_resp.status_code == 200;
-    some i;
+    })
+    jwks_resp.status_code == 200
+    some i
     k := jwks_resp.body.keys[i]
 ]
 
-# Select the appropriate key by matching kid
-selected_key := key if {
-    jwt_kid
+# Select matching key by 'kid'
+selected_key[kid] if {
     some i
     key := jwks_keys[i]
-    key.kid == jwt_kid
+    kid := key.kid
 }
 
-# Verify JWT signature
-jwt_signature_valid := io.jwt.verify_rs256(input.token, selected_key) if input.token && selected_key
-
-# Validate issuer if jwt_claims exists and contains "iss"
-valid_issuer if {
-    jwt_verified
-    jwt_claims.iss == "http://localhost:8080/realms/zero-trust"
-}
-
-# Validate audience (string or array)
-valid_audience if {
-    jwt_verified
-    is_string(jwt_claims.aud)
-    jwt_claims.aud == "myapp" or jwt_claims.aud == "account"
-}
-valid_audience if {
-    jwt_verified
-    is_array(jwt_claims.aud)
-    some i
-    jwt_claims.aud[i] == "myapp" or jwt_claims.aud[i] == "account"
-}
-
-# Only verified if all of the above checks pass
-jwt_verified if {
+# Verify signature using selected key
+jwt_signature_valid if {
     input.token
-    jwt_claims
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_header := jwt_parts[1]
+    jwt_kid := jwt_header.kid
+    selected_key[jwt_kid]
+    io.jwt.verify_rs256(input.token, [k | k := jwks_keys[_]; k.kid == jwt_kid][0])
+}
+
+# Ensure issuer matches expected value, using get_claim for field access
+valid_issuer if {
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    iss := get_claim(jwt_claims, "iss", "")
+    iss == "http://localhost:8080/realms/zero-trust"
+}
+
+# Audience check for string or array type, using get_claim for field access
+valid_audience if {
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    aud := get_claim(jwt_claims, "aud", "")
+    is_string(aud)
+    aud == "myapp"
+}
+valid_audience if {
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    aud := get_claim(jwt_claims, "aud", "")
+    is_string(aud)
+    aud == "account"
+}
+valid_audience if {
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    aud := get_claim(jwt_claims, "aud", [])
+    is_array(aud)
+    some i
+    aud[i] == "myapp"
+}
+valid_audience if {
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    aud := get_claim(jwt_claims, "aud", [])
+    is_array(aud)
+    some i
+    aud[i] == "account"
+}
+
+# Combine JWT verification conditions
+jwt_verified if {
     jwt_signature_valid
+    valid_issuer
+    valid_audience
 }
 
-# Extract roles if realm_access and roles exist
-user_roles := jwt_claims.realm_access.roles if {
+# Extract user roles from token if present, using get_claim for field access
+user_roles[role] if {
     jwt_verified
-    jwt_claims.realm_access
-    jwt_claims.realm_access.roles
+    input.token
+    jwt_parts := io.jwt.decode(input.token)
+    is_array(jwt_parts)
+    jwt_claims := jwt_parts[2]
+    realm_access := get_claim(jwt_claims, "realm_access", {})
+    is_object(realm_access)
+    roles := get_claim(realm_access, "roles", [])
+    is_array(roles)
+    role := roles[_]
 }
 
-# Define access control rules based on roles and path
-has_required_role(path, roles) if {
-    startswith(path, "/api/admin")
-    contains(roles, "admin")
-}
-has_required_role(path, roles) if {
-    startswith(path, "/api/data")
-    contains(roles, "user")
-}
-has_required_role(path, roles) if {
-    path == "/health"
+# Admin access: allow if user has 'admin' role
+user_is_admin if {
+    "admin" in user_roles
 }
 
-# Main policy rule
-allow if {
-    jwt_verified
-    user_roles
-    has_required_role(input.path, user_roles)
+# User access: allow if user has 'user' role and path matches
+user_is_user if {
+    "user" in user_roles
+    input.path
+    startswith(input.path, "/api/data")
 }
 
-# Debug block for introspection
-debug = {
-    "jwt_kid": jwt_kid,
-    "jwt_header": jwt_header,
-    "jwt_claims": jwt_claims,
+# Always allow health check
+is_health_check if {
+    input.path == "/health"
+}
+
+# Main allow rule
+allow if is_health_check
+allow if user_is_admin
+allow if user_is_user
+
+# Debug trace for testing
+debug := {
     "jwks_keys": jwks_keys,
-    "selected_key": selected_key,
-    "jwt_signature_valid": jwt_signature_valid,
-    "valid_issuer": valid_issuer,
-    "valid_audience": valid_audience,
-    "jwt_verified": jwt_verified,
-    "user_roles": user_roles,
-    "has_required_role": has_required_role(input.path, user_roles)
+    "user_roles": [r | r := user_roles[_]],
+    "is_health_check": is_health_check
 } if input.token
