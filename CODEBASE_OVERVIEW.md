@@ -86,7 +86,6 @@ graph TD
 ```
 /
 ├── docker-compose.yml                  # Main Compose file (all core services)
-├── docker-compose.frontend-dev.yml     # Dev override for frontend
 ├── docker-compose.render.yml           # Render.com deployment config
 ├── docker-compose.secrets.yml          # Compose file for secrets
 ├── networks/                           # Custom Docker network definitions
@@ -239,10 +238,10 @@ graph TD
 ### Manual Docker Compose
 ```bash
 # Production
-docker-compose up -d
+docker-compose -f docker-compose.yml up -d
 
 # Development (frontend hot reload)
-docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml up -d
+docker-compose -f docker-compose.yml up -d
 ```
 
 ### Testing
