@@ -4,16 +4,6 @@
 # Source common functions
 source "$(dirname "$0")/lib/common.sh"
 
-# Deploy frontend in development mode
-deploy_frontend_dev() {
-    print_status "Deploying frontend in development mode..."
-    docker-compose -f ../docker-compose.yml -f ../docker-compose.frontend-dev.yml up -d frontend-dev
-    
-    # Wait for frontend to be ready
-    print_status "Waiting for frontend to be ready..."
-    sleep 10
-}
-
 # Show final status
 show_final_status() {
     echo ""
@@ -54,9 +44,9 @@ show_final_status() {
     echo ""
     echo "🔄 Development Commands:"
     echo "======================="
-    echo "View frontend logs: docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml logs -f frontend-dev"
-    echo "Restart frontend: docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml restart frontend-dev"
-    echo "Stop development: docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml down"
+    echo "View frontend logs: docker-compose -f docker-compose.yml logs -f frontend-app"
+    echo "Restart frontend: docker-compose -f docker-compose.yml restart frontend-app"
+    echo "Stop development: docker-compose -f docker-compose.yml down"
     echo ""
 }
 
@@ -76,7 +66,6 @@ main() {
     # Deploy phase
     deploy_core_services
     setup_keycloak
-    deploy_frontend_dev
     
     # Test phase
     export DEV_MODE=1
