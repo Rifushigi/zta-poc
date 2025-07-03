@@ -72,7 +72,6 @@ NODE_ENV=development                         # Development
 The frontend deployment uses Docker Compose with multiple configuration files:
 
 - `docker-compose.yml` - Main services + production frontend
-- `docker-compose.frontend-dev.yml` - Development frontend overlay
 
 ## 🐳 Docker Images
 
@@ -145,7 +144,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 docker-compose -f docker-compose.yml up -d frontend-app
 
 # Development
-docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml up -d frontend-dev
+docker-compose -f docker-compose.yml up -d frontend-dev
 ```
 
 ## 🔍 Monitoring & Debugging
@@ -165,7 +164,7 @@ docker ps | grep frontend
 docker-compose -f docker-compose.yml logs frontend-app
 
 # Development logs
-docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml logs frontend-dev
+docker-compose -f docker-compose.yml logs frontend-dev
 
 # Follow logs
 docker-compose -f docker-compose.yml logs -f frontend-app
@@ -271,7 +270,7 @@ docker-compose restart frontend-app
 docker inspect $(docker ps -q --filter "name=frontend-dev")
 
 # Restart development container
-docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml restart frontend-dev
+docker-compose -f docker-compose.yml restart frontend-dev
 ```
 
 #### API Connection Issues
