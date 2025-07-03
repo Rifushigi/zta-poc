@@ -22,40 +22,18 @@ get_claim(claims, key, def) = def if {
     not is_object(claims)
 }
 
-# Dynamically fetch JWKS keys with error handling
-jwks_keys := [k |
-    jwks_resp := http.send({
-        "url": "http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs",
-        "method": "GET",
-        "timeout": "10s"
-    })
-    jwks_resp.status_code == 200
-    jwks_resp.body.keys  # Ensure keys exist
-    some i
-    k := jwks_resp.body.keys[i]
-]
+# Dynamically fetch JWKS JSON
+jwks_resp := http.send({
+    "url": "http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs",
+    "method": "GET",
+    "timeout": "10s"
+})
 
-# Select matching key by 'kid'
-selected_key[kid] = key if {
-    some i
-    key := jwks_keys[i]
-    kid := key.kid
-}
-
-# Verify signature using selected key
+# Verify signature using JWKS JSON
 jwt_signature_valid if {
     input.token
-    jwt_parts := io.jwt.decode(input.token)
-    count(jwt_parts) == 3
-    jwt_kid := jwt_parts[0].kid
-    
-    # Find matching key using safer iteration
-    some i
-    key := jwks_keys[i]
-    key.kid == jwt_kid
-    
-    # Verify signature
-    io.jwt.verify_rs256(input.token, key)
+    jwks_resp.status_code == 200
+    io.jwt.verify_rs256(input.token, jwks_resp.body)
 }
 
 # Ensure issuer matches expected value, using get_claim for field access
@@ -121,7 +99,7 @@ jwt_verified if {
 
 # Extract user roles from token if present, using get_claim for field access
 user_roles[role] if {
-    jwt_verified
+    
     input.token
     jwt_parts := io.jwt.decode(input.token)
     count(jwt_parts) == 3
@@ -162,7 +140,7 @@ trace := {
     "user_is_admin": user_is_admin,
     "user_is_user": user_is_user,
     "is_health_check": is_health_check,
-    "jwks_keys_count": count(jwks_keys),
+    "jwks_keys_count": count(jwks_resp.body.keys),
     "allow": allow
 }
 
@@ -213,8 +191,8 @@ jwks_debug := {
 # Debug: Key matching analysis
 key_matching_debug := {
     "jwt_kid": jwt_kid,
-    "available_kids": [k.kid | k := jwks_keys[_]],
-    "key_found": count([k | k := jwks_keys[_]; k.kid == jwt_kid]) > 0
+    "available_kids": [k.kid | k := jwks_resp.body.keys[_]],
+    "key_found": count([k | k := jwks_resp.body.keys[_]; k.kid == jwt_kid]) > 0
 } if {
     input.token
     jwt_parts := io.jwt.decode(input.token)
@@ -244,9 +222,9 @@ jwt_signature_debug := {
     "has_token": input.token != "",
     "jwt_parts_valid": count(io.jwt.decode(input.token)) == 3,
     "jwt_kid": jwt_parts[0].kid,
-    "jwks_keys_available": count(jwks_keys),
-    "available_kids": [k.kid | k := jwks_keys[_]],
-    "matching_keys_found": count([k | k := jwks_keys[_]; k.kid == jwt_parts[0].kid])
+    "jwks_keys_available": count(jwks_resp.body.keys),
+    "available_kids": [k.kid | k := jwks_resp.body.keys[_]],
+    "matching_keys_found": count([k | k := jwks_resp.body.keys[_]; k.kid == jwt_parts[0].kid])
 } if {
     input.token
     jwt_parts := io.jwt.decode(input.token)
@@ -256,7 +234,7 @@ jwt_signature_debug := {
 # Debug the actual signature verification step
 jwt_signature_verification_debug := {
     "jwt_kid": jwt_parts[0].kid,
-    "matching_key_found": count([k | k := jwks_keys[_]; k.kid == jwt_parts[0].kid]) > 0,
+    "matching_key_found": count([k | k := jwks_resp.body.keys[_]; k.kid == jwt_parts[0].kid]) > 0,
     "matching_key_details": matching_key,
     "signature_verification_result": io.jwt.verify_rs256(input.token, matching_key),
     "key_type": matching_key.kty,
@@ -266,7 +244,7 @@ jwt_signature_verification_debug := {
     input.token
     jwt_parts := io.jwt.decode(input.token)
     count(jwt_parts) == 3
-    matching_key := [k | k := jwks_keys[_]; k.kid == jwt_parts[0].kid][0]
+    matching_key := [k | k := jwks_resp.body.keys[_]; k.kid == jwt_parts[0].kid][0]
 }
 
 valid_issuer_debug = valid_issuer
