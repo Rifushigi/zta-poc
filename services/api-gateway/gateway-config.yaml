@@ -2,10 +2,10 @@ _format_version: "2.1"
 
 services:
   - name: backend-service
-    url: http://backend-service:3000
+    url: http://backend-service:4000
     protocol: http
     host: backend-service
-    port: 3000
+    port: 4000
     connect_timeout: 5000
     write_timeout: 5000
     read_timeout: 5000
@@ -15,9 +15,18 @@ routes:
   - name: api-route
     service: backend-service
     protocols:
-      - https
+      - http
     paths:
       - /api
+    strip_path: false
+    preserve_host: true
+
+  - name: admin-route
+    service: backend-service
+    protocols:
+      - http
+    paths:
+      - /api/admin
     strip_path: false
     preserve_host: true
 
@@ -48,6 +57,7 @@ plugins:
         - key: |
             -----BEGIN PUBLIC KEY-----
             # This will be replaced with actual JWKS from Keycloak
+            # TODO: Replace with actual JWKS from Keycloak
             -----END PUBLIC KEY-----
           key_type: RSA
           kid: default
@@ -56,7 +66,7 @@ plugins:
     config:
       host: opa
       port: 8181
-      scheme: https
+      scheme: http
       path: /v1/data/authz/allow
       include_headers: true
       include_body: false
