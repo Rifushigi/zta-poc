@@ -90,7 +90,7 @@ deploy_frontend() {
     
     if [ "$mode" = "dev" ]; then
         # Development mode
-        docker-compose -f docker-compose.yml -f docker-compose.frontend-dev.yml up -d frontend-dev
+        docker-compose -f docker-compose.yml up -d frontend-dev
         
         print_success "Frontend deployed in development mode"
         print_status "Access the frontend at: http://localhost:3000"
