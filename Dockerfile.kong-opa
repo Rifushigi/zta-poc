@@ -2,12 +2,18 @@ FROM kong:3.4
 
 USER root
 
-# Install tools
-RUN apt-get update && apt-get install -y git unzip gcc lua5.1-dev luarocks
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    git curl unzip gcc make luarocks lua5.1-dev \
+ && rm -rf /var/lib/apt/lists/*
 
-# Clone and build the plugin
-RUN git clone https://github.com/wada-ama/kong-plugin-opa.git /tmp/kong-opa \
- && cd /tmp/kong-opa/kong_plugin_opa \
- && luarocks make
+# Set working directory
+WORKDIR /tmp
+
+# Clone plugin repo and install manually
+RUN git clone https://github.com/jtbonhomme/kong-plugin-opa.git \
+ && cd kong-plugin-opa \
+ && luarocks make kong-opa-plugin-0.0.15-1.rockspec \
+ && rm -rf kong-plugin-opa
 
 USER kong
