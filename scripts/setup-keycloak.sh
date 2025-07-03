@@ -26,6 +26,9 @@ if [ "$ADMIN_TOKEN" = "null" ] || [ -z "$ADMIN_TOKEN" ]; then
     exit 1
 fi
 
+# Print first 9 characters of the admin token for verification
+echo "Admin token (first 9 chars): ${ADMIN_TOKEN:0:9}"
+
 # Create realm
 echo "🏛️ Creating realm..."
 curl -X POST \
