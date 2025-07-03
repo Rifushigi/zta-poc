@@ -1,0 +1,13 @@
+FROM kong:3.4
+
+USER root
+
+# Install tools
+RUN apt-get update && apt-get install -y git unzip gcc lua5.1-dev luarocks
+
+# Clone and build the plugin
+RUN git clone https://github.com/wada-ama/kong-plugin-opa.git /tmp/kong-opa \
+ && cd /tmp/kong-opa/kong_plugin_opa \
+ && luarocks make
+
+USER kong
