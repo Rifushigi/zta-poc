@@ -36,17 +36,17 @@ plugins:
       key_claim_name: kid
       secret_is_base64: false
 
-  - name: opa
+  - name: external-authz
     config:
-      host: opa
-      port: 8181
-      scheme: http
-      path: /v1/data/authz/allow
-      include_headers: true
-      include_body: false
+      url: http://opa:8181/v1/data/authz/allow
+      method: POST
+      body: '{"input": {"headers": {{headers}}, "method": "{{method}}", "path": "{{path}}"}}'
       timeout: 5000
       keepalive: 60000
-      ssl_verify: false
+      allow_on_error: false
+      path_is_regex: false
+      headers:
+        - Authorization
 
   - name: prometheus
     config:
