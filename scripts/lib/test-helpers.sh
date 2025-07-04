@@ -15,6 +15,7 @@ test_endpoint() {
     local name="$1"
     local url="$2"
     local expected_status="$3"
+    local should_fail="${4:-false}"
     
     echo -n "Testing $name... "
     
@@ -27,10 +28,18 @@ test_endpoint() {
     response=$(curl -s -o /dev/null -w "%{http_code}" $curl_opts "$url")
     
     if [ "$response" = "$expected_status" ]; then
-        echo -e "${GREEN}✅ PASS${NC}"
+        if [ "$should_fail" = "true" ]; then
+            echo -e "${GREEN}✅ PASS (correctly denied)${NC}"
+        else
+            echo -e "${GREEN}✅ PASS${NC}"
+        fi
         return 0
     else
-        echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        if [ "$should_fail" = "true" ]; then
+            echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        else
+            echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        fi
         return 1
     fi
 }
@@ -43,6 +52,7 @@ test_with_token() {
     local token="$4"
     local data="$5"
     local expected_status="$6"
+    local should_fail="${7:-false}"
     
     echo -n "Testing $name... "
     
@@ -53,10 +63,18 @@ test_with_token() {
     fi
     
     if [ "$response" = "$expected_status" ]; then
-        echo -e "${GREEN}✅ PASS${NC}"
+        if [ "$should_fail" = "true" ]; then
+            echo -e "${GREEN}✅ PASS (correctly denied)${NC}"
+        else
+            echo -e "${GREEN}✅ PASS${NC}"
+        fi
         return 0
     else
-        echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        if [ "$should_fail" = "true" ]; then
+            echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        else
+            echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        fi
         return 1
     fi
 }
