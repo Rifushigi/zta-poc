@@ -13,7 +13,7 @@ show_final_status() {
     echo "=============="
     echo "Frontend (Dev): http://localhost:3000"
     echo "Keycloak Admin: http://localhost:8080 (admin/admin)"
-    echo "Kong Gateway: https://localhost:8443"
+    echo "Express Gateway: http://localhost:8000"
     echo "Backend Service: http://localhost:3000"
     echo "OPA Policy Engine: http://localhost:8181"
     echo "Grafana: http://localhost:3001 (admin/admin)"
