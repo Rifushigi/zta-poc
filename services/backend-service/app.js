@@ -18,30 +18,11 @@ const { auditMiddleware } = require('./middleware/audit');
 const { createItemSchema, updateItemSchema, paginationSchema } = require('./validations/itemValidation');
 
 // Import Sequelize and models
-const { Sequelize } = require('sequelize');
-const Item = require('./models/item');
+const db = require('./models');
+const Item = db.Item;
 
 const app = express();
 const port = process.env.PORT || 4000;
-
-// Database connection
-const sequelize = new Sequelize(
-    process.env.DB_NAME || 'zerotrust',
-    process.env.DB_USER || 'backend',
-    process.env.DB_PASSWORD || 'backendpass',
-    {
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 5432,
-        dialect: 'postgres',
-        logging: false,
-        pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        }
-    }
-);
 
 // Security middleware
 app.use(helmet());
@@ -449,18 +430,18 @@ app.use((req, res) => {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
     logger.info('SIGTERM received, shutting down gracefully');
-    await sequelize.close();
+    await db.sequelize.close();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
     logger.info('SIGINT received, shutting down gracefully');
-    await sequelize.close();
+    await db.sequelize.close();
     process.exit(0);
 });
 
 // Sync DB and start server
-sequelize.sync({ alter: true }).then(() => {
+db.sequelize.sync({ alter: true }).then(() => {
     logger.info('Database synchronized successfully');
     app.listen(port, '0.0.0.0', () => {
         logger.info(`Backend service listening on port ${port}`);
