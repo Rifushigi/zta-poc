@@ -1,19 +1,13 @@
-FROM kong:3.4
+FROM kong:latest
 
 USER root
+# Needed to extract LuaRocks manifests (avoids unzip-related errors)
+RUN apt-get update && apt-get install -y git unzip curl wget gcc musl-dev lua5.1-dev luarocks
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    git curl unzip gcc make luarocks lua5.1-dev \
- && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+# Install the OPA plugin via LuaRocks
 WORKDIR /tmp
-
-# Clone plugin repo and install manually
-RUN git clone https://github.com/jtbonhomme/kong-plugin-opa.git \
+RUN git clone https://github.com/wada-ama/kong-plugin-opa.git \
  && cd kong-plugin-opa \
- && luarocks make kong-opa-plugin-0.0.15-1.rockspec \
- && rm -rf kong-plugin-opa
+ && luarocks make kong-plugin-opa-0.1.1-2.rockspec
 
 USER kong
