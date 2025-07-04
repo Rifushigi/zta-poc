@@ -1,0 +1,34 @@
+_format_version: "3.0"
+
+services:
+  - name: backend-service
+    url: http://backend-service:4000
+
+routes:
+  - name: api-route
+    service: backend-service
+    paths:
+      - /api
+    strip_path: false
+    preserve_host: true
+
+  - name: admin-route
+    service: backend-service
+    paths:
+      - /api/admin
+    strip_path: false
+    preserve_host: true
+
+plugins:
+  - name: jwt
+    config:
+      key_claim_name: kid
+      secret_is_base64: false
+
+  - name: opa
+    service: backend-service
+    config:
+      policy:
+        decision: /v1/data/authz/allow
+
+  - name: prometheus 
