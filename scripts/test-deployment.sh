@@ -91,7 +91,7 @@ echo ""
 echo "📊 Testing monitoring stack..."
 test_endpoint "Prometheus" "http://localhost:9090/graph" "200"
 test_endpoint "Grafana" "http://localhost:3001/api/health" "200"
-test_endpoint "Kibana" "http://localhost:5601" "200"
+test_endpoint "Kibana" "http://localhost:5601/api/status" "200"
 
 echo ""
 echo -e "${GREEN}✅ Zero Trust testing complete!${NC}"
