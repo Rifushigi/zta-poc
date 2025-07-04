@@ -24,6 +24,7 @@ plugins:
     config:
       key_claim_name: kid
       secret_is_base64: false
+      jwks_uri: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
 
   - name: opa
     service: backend-service
