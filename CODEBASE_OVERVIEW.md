@@ -7,6 +7,7 @@ A practical guide for onboarding and quick reference to the Zero Trust codebase,
 ---
 
 ## Table of Contents
+
 - [1. Quick Start](#1-quick-start)
 - [2. Architecture Overview](#2-architecture-overview)
 - [3. Directory Structure](#3-directory-structure)
@@ -23,11 +24,13 @@ A practical guide for onboarding and quick reference to the Zero Trust codebase,
 ## 1. Quick Start
 
 ### Prerequisites
+
 - Docker and Docker Compose
 - Node.js 18+ (for local development)
 - OpenSSL (for certificate generation)
 
 ### Deploy in 3 Steps
+
 ```bash
 # 1. Setup networks, certs, and secrets
 ./scripts/setup.sh
@@ -40,6 +43,7 @@ A practical guide for onboarding and quick reference to the Zero Trust codebase,
 ```
 
 ### Access Services
+
 - **Frontend**: https://localhost:8081
 - **Keycloak Admin**: http://localhost:8080 (admin/admin)
 - **API Gateway**: https://localhost:8443
@@ -53,11 +57,12 @@ A practical guide for onboarding and quick reference to the Zero Trust codebase,
 This Zero Trust implementation demonstrates a modern Zero Trust stack for hybrid cloud environments. It enforces strict identity, policy, and network controls, and provides full observability.
 
 ### High-Level Diagram
+
 ```mermaid
 graph TD
     User["User/Service"]
     Keycloak["Keycloak (IAM)"]
-    Kong["Kong (API Gateway)"]
+    ExpressGateway["Express Gateway (API Gateway)"]
     OPA["OPA (Policy Engine)"]
     Backend["Backend Service (Node.js)"]
     DB["PostgreSQL"]
@@ -67,9 +72,9 @@ graph TD
     Alertmanager["Alertmanager"]
 
     User-->|OIDC|Keycloak
-    User-->|API/mTLS|Kong
-    Kong-->|JWT, mTLS|Backend
-    Kong-->|Policy Query|OPA
+    User-->|API|ExpressGateway
+    ExpressGateway-->|JWT|Backend
+    ExpressGateway-->|Policy Query|OPA
     Backend-->|DB|DB
     Backend-->|Metrics|Prometheus
     Backend-->|Logs|ELK
@@ -127,17 +132,20 @@ graph TD
 ## 4. Component Integration
 
 ### Authentication & Authorization
+
 - **Keycloak** issues JWTs after OIDC login. All API requests must present a valid JWT.
-- **Kong** validates JWTs, enforces mTLS, and applies rate limiting.
-- **OPA** is queried by Kong and the backend for policy decisions (e.g., can user X access resource Y?).
+- **Express Gateway** validates JWTs, applies rate limiting, and enforces OPA policies.
+- **OPA** is queried by the Express Gateway and the backend for policy decisions (e.g., can user X access resource Y?).
 - **Backend** verifies JWTs, enforces RBAC, and queries OPA for fine-grained authorization.
 
 ### Data Flow
-- **User/Service** → **Kong** (API Gateway) → **Backend** → **PostgreSQL**
-- **Kong** and **Backend** both consult **OPA** for policy enforcement.
+
+- **User/Service** → **Express Gateway** (API Gateway) → **Backend** → **PostgreSQL**
+- **Express Gateway** and **Backend** both consult **OPA** for policy enforcement.
 - **Backend** emits logs (to ELK) and metrics (to Prometheus).
 
 ### Observability
+
 - **Prometheus** scrapes metrics from backend, node exporter, and other services.
 - **Grafana** visualizes metrics and dashboards.
 - **Alertmanager** sends alerts based on Prometheus rules.
@@ -150,44 +158,49 @@ graph TD
 ## 5. Service Deep-Dives
 
 ### 5.1 Keycloak (Identity & Access Management)
+
 - **Purpose:** Centralized authentication, user management, and RBAC.
 - **Integration:**
   - Issues JWTs for users/services.
-  - Kong and backend validate these JWTs.
+  - Express Gateway validates these JWTs.
   - Admin UI: http://localhost:8080 (default: admin/admin)
 - **Customization:**
   - Realms, clients, and roles can be managed via the admin UI or REST API.
 
 ### 5.2 OPA (Policy Enforcement)
+
 - **Purpose:** Fine-grained, dynamic authorization using Rego policies.
 - **Integration:**
-  - Kong and backend query OPA for allow/deny decisions.
+  - Express Gateway and backend query OPA for allow/deny decisions.
   - Policies are stored in `policies/` and hot-reloaded.
 - **Example:**
   - A policy might allow only users with the `admin` role to access certain endpoints.
 
-### 5.3 Kong (API Gateway)
-- **Purpose:** Entry point for all API traffic, enforcing mTLS, JWT validation, and rate limiting.
+### 5.3 Express Gateway (API Gateway)
+
+- **Purpose:** Entry point for all API traffic, enforcing JWT validation, OPA policy enforcement, rate limiting, logging, metrics, error handling, IP filtering, and request validation.
 - **Integration:**
   - Validates JWTs from Keycloak.
-  - Enforces mTLS between clients and gateway.
+  - Applies rate limiting and IP filtering.
   - Queries OPA for policy decisions before routing requests.
-  - Logs traffic and metrics.
+  - Logs traffic and exposes Prometheus-compatible metrics.
 - **Customization:**
-  - Plugins and routes are configured in `services/api-gateway/gateway-config.yaml`.
+  - Configuration is in `services/api-gateway/`.
 
 ### 5.4 Backend Service
+
 - **Tech:** Node.js (Express), Sequelize ORM, PostgreSQL.
 - **Features:**
   - CRUD endpoints, input validation, auditing, Prometheus metrics, OpenAPI docs, security headers, rate limiting, CORS, structured logging, request tracing.
 - **Integration:**
-  - Receives requests from Kong, verifies JWT, enforces RBAC, queries OPA.
+  - Receives requests from Express Gateway, verifies JWT, enforces RBAC, queries OPA.
   - Persists data in PostgreSQL.
   - Emits logs to ELK and metrics to Prometheus.
 - **Customization:**
   - Business logic, models, and API routes in `services/backend-service/`.
 
 ### 5.5 PostgreSQL (Database)
+
 - **Purpose:** Persistent storage for backend service.
 - **Integration:**
   - Managed via Docker Compose.
@@ -195,6 +208,7 @@ graph TD
   - Data volume for persistence.
 
 ### 5.6 Monitoring & Observability
+
 - **Prometheus:** Scrapes metrics from backend and infrastructure.
 - **Grafana:** Visualizes metrics and dashboards.
 - **Alertmanager:** Sends alerts based on Prometheus rules.
@@ -210,7 +224,7 @@ graph TD
 - **mTLS:** All service-to-service traffic is encrypted and authenticated.
 - **JWT Authentication:** All API calls require valid JWTs from Keycloak.
 - **RBAC & OPA Policies:** Centralized, auditable, and versioned authorization logic.
-- **Rate Limiting:** API Gateway and backend both enforce rate limits.
+- **Rate Limiting:** Express Gateway and backend both enforce rate limits.
 - **Audit Logging:** All sensitive actions are logged and shipped to ELK.
 - **Secrets Management:** All sensitive credentials are injected via Docker secrets, never hardcoded.
 - **CORS & Security Headers:** Strict CORS, Helmet, and custom headers in backend.
@@ -224,6 +238,7 @@ graph TD
 ## 7. Deployment & Development
 
 ### Local Development
+
 ```bash
 # 1. Setup networks, certs, and secrets
 ./scripts/setup.sh
@@ -236,6 +251,7 @@ graph TD
 ```
 
 ### Manual Docker Compose
+
 ```bash
 # Production
 docker-compose -f docker-compose.yml up -d
@@ -245,6 +261,7 @@ docker-compose -f docker-compose.yml up -d
 ```
 
 ### Testing
+
 ```bash
 # Test full deployment
 ./scripts/test-deployment.sh
@@ -260,6 +277,7 @@ docker-compose -f docker-compose.yml up -d
 ## 8. Extending the System
 
 ### Adding New Services
+
 1. Create service directory in `services/`
 2. Add Dockerfile and configuration
 3. Update `docker-compose.yml`
@@ -267,11 +285,13 @@ docker-compose -f docker-compose.yml up -d
 5. Update OPA policies if needed
 
 ### Adding New Policies
+
 1. Create Rego file in `policies/`
 2. Test with OPA CLI: `opa test policies/`
 3. Deploy and test with real requests
 
 ### Adding New Monitoring
+
 1. Configure Prometheus targets
 2. Create Grafana dashboards
 3. Set up alerting rules
@@ -283,18 +303,21 @@ docker-compose -f docker-compose.yml up -d
 ## 9. Onboarding & Contribution
 
 ### For New Contributors
+
 1. Read this overview first
 2. Review [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md) for technical details
 3. Follow [implementation_guide.md](./implementation_guide.md) for step-by-step setup
 4. Run tests to verify your environment
 
 ### Development Workflow
+
 1. Use `./scripts/deploy-dev.sh` for development
 2. Write tests for new features
 3. Update documentation as needed
 4. Follow security best practices
 
 ### Code Organization
+
 - **Scripts**: Use shared libraries in `scripts/lib/`
 - **Services**: Keep services modular and focused
 - **Policies**: Version control all OPA policies
@@ -307,11 +330,11 @@ docker-compose -f docker-compose.yml up -d
 - [Zero Trust Architecture Principles](https://www.nist.gov/publications/zero-trust-architecture)
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
 - [OPA Documentation](https://www.openpolicyagent.org/docs/)
-- [Kong Documentation](https://docs.konghq.com/)
+- [Express Gateway Documentation](https://www.express-gateway.io/docs/)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 
 > **📚 For comprehensive architectural references and design decisions, see [ARCHITECTURE_DEEP_DIVE.md](./ARCHITECTURE_DEEP_DIVE.md)**
 
 ---
 
-**For any questions, contributions, or issues, please refer to the README or open an issue in the repository.** 
+**For any questions, contributions, or issues, please refer to the README or open an issue in the repository.**
