@@ -9,6 +9,7 @@ This directory contains the monitoring and observability components for the Zero
 Two comprehensive dashboards are automatically provisioned:
 
 1. **Zero Trust Infrastructure Dashboard** (`grafana-dashboard.json`)
+
    - Service health overview
    - HTTP request rates and response times
    - Authentication and authorization failures
@@ -46,6 +47,7 @@ Configured with multiple notification channels:
 #### Configuration
 
 Update the following in `alertmanager.yml`:
+
 - SMTP credentials for email notifications
 - Slack webhook URLs
 - Email addresses for different teams
@@ -53,7 +55,8 @@ Update the following in `alertmanager.yml`:
 ### Prometheus
 
 Collects metrics from:
-- Kong API Gateway
+
+- Express Gateway (API Gateway)
 - Backend Service
 - OPA Policy Engine
 - Keycloak Identity Provider
@@ -62,6 +65,7 @@ Collects metrics from:
 ### Node Exporter
 
 Provides system-level metrics:
+
 - CPU and memory usage
 - Disk I/O and space
 - Network statistics
@@ -70,19 +74,21 @@ Provides system-level metrics:
 ## Setup Instructions
 
 1. **Configure Notification Channels**:
+
    ```bash
    # Edit alertmanager.yml
    vim monitoring/alertmanager.yml
-   
+
    # Update SMTP settings
    smtp_auth_username: 'your-email@gmail.com'
    smtp_auth_password: 'your-app-password'
-   
+
    # Update Slack webhooks
    api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
    ```
 
 2. **Deploy the Stack**:
+
    ```bash
    ./deploy.sh
    ```
@@ -96,12 +102,14 @@ Provides system-level metrics:
 ## Dashboard Features
 
 ### Infrastructure Dashboard
+
 - **Service Health**: Real-time status of all services
 - **Performance Metrics**: Request rates, response times, error rates
 - **Resource Monitoring**: CPU, memory, disk usage
 - **Security Events**: Authentication/authorization failures
 
 ### Security Dashboard
+
 - **Authentication Analytics**: Success rates, failure reasons
 - **Authorization Monitoring**: OPA decision tracking
 - **Token Management**: JWT validation statistics
@@ -122,16 +130,19 @@ The following alerts are configured:
 ## Customization
 
 ### Adding New Dashboards
+
 1. Create dashboard JSON file
 2. Add to `grafana/dashboards.yml` provisioning
 3. Mount in docker-compose.yml
 
 ### Adding New Alerts
+
 1. Add alert rules to `alerts.yml`
 2. Configure routing in `alertmanager.yml`
 3. Add notification channels as needed
 
 ### Custom Metrics
+
 1. Instrument your services with Prometheus metrics
 2. Add scrape configuration to `prometheus.yml`
 3. Create dashboard panels for new metrics
@@ -139,16 +150,19 @@ The following alerts are configured:
 ## Troubleshooting
 
 ### Dashboard Not Loading
+
 - Check Grafana logs: `docker-compose logs grafana`
 - Verify dashboard JSON syntax
 - Ensure Prometheus datasource is configured
 
 ### Alerts Not Firing
+
 - Check Prometheus targets: http://localhost:9090/targets
 - Verify alert rules: http://localhost:9090/alerts
 - Check Alertmanager configuration: http://localhost:9093
 
 ### Notification Issues
+
 - Verify SMTP/Slack credentials in `alertmanager.yml`
 - Check Alertmanager logs: `docker-compose logs alertmanager`
-- Test notification channels via Alertmanager UI 
+- Test notification channels via Alertmanager UI
