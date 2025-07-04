@@ -207,10 +207,32 @@ app.use('/api/data', (req, res, next) => {
     }
 });
 
+// Add this before the proxy middleware
+app.use((req, res, next) => {
+    if (req.user) {
+        req.headers['x-user'] = req.user.preferred_username || req.user.sub || 'unknown';
+        req.headers['x-roles'] = Array.isArray(req.user.realm_access?.roles)
+            ? req.user.realm_access.roles.join(',')
+            : '';
+    }
+    next();
+});
+
 // Apply middlewares and proxy
 app.use(jwtMiddleware);
 app.use(opaEnforce);
-app.use('/api', createProxyMiddleware({ target: BACKEND_URL, changeOrigin: true }));
+app.use('/api', createProxyMiddleware({
+    target: BACKEND_URL,
+    changeOrigin: true,
+    onProxyReq: (proxyReq, req, res) => {
+        if (req.user) {
+            proxyReq.setHeader('x-user', req.user.preferred_username || req.user.sub || 'unknown');
+            proxyReq.setHeader('x-roles', Array.isArray(req.user.realm_access?.roles)
+                ? req.user.realm_access.roles.join(',')
+                : '');
+        }
+    }
+}));
 
 // Custom error handling middleware
 app.use((err, req, res, next) => {
