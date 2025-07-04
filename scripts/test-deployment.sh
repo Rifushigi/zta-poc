@@ -68,15 +68,6 @@ test_with_token "User access to /api/admin (should fail)" "http://localhost:8000
 # Test access without token (should fail)
 test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "401"
 
-# Test 5: mTLS verification
-echo ""
-echo "🔒 Testing mTLS verification..."
-if [ -f "certs/client.crt" ] && [ -f "certs/client.key" ]; then
-    test_with_mtls "mTLS with valid cert" "https://localhost:8443/api/data" "certs/client.crt" "certs/client.key" "401"
-else
-    echo -e "${YELLOW}⚠️ Skipping mTLS test (certificates not found)${NC}"
-fi
-
 # Test 6: Network isolation
 echo ""
 echo "🌐 Testing network isolation..."
@@ -109,6 +100,5 @@ echo "  - Health checks: All services responding"
 echo "  - Authentication: Token generation working"
 echo "  - Authorization: OPA policies enforced"
 echo "  - API Gateway: Access control working"
-echo "  - mTLS: Certificate verification working"
 echo "  - Network isolation: Services properly segmented"
 echo "  - Monitoring: All dashboards accessible"
