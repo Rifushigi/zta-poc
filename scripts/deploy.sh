@@ -20,7 +20,7 @@ show_final_status() {
     echo "Frontend (HTTP): http://localhost:8082"
     echo "Frontend (HTTPS): https://localhost:8081"
     echo "Keycloak Admin: http://localhost:8080 (admin/admin)"
-    echo "API Gateway: http://localhost:8000"
+    echo "Kong Gateway: http://localhost:8000"
     echo "Backend Service: http://localhost:4000"
     echo "OPA Policy Engine: https://localhost:8181"
     echo "Grafana: http://localhost:3001 (admin/admin)"
