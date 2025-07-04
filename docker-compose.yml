@@ -50,30 +50,27 @@ services:
       retries: 3
 
   # API Gateway
-  kong:
+  express-gateway:
     build:
-      context: .
-      dockerfile: Dockerfile.kong-opa
-    image: kong-custom-opa
+      context: ./services/api-gateway
+    image: express-gateway
     restart: always
     environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /kong.yml
-      KONG_PLUGINS: bundled,opa
-    volumes:
-      - ./kong.yml:/kong.yml:ro
+      GATEWAY_PORT: 8000
+      BACKEND_URL: http://backend-service:4000
+      OPA_URL: http://opa:8181/v1/data/authz/allow
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
     ports:
       - "8000:8000"
-      - "8443:8443"
-      - "8001:8001"
     networks:
       - on-prem-net
       - cloud-net
     depends_on:
       - keycloak
       - opa
+      - backend-service
     healthcheck:
-      test: ["CMD", "kong", "health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
