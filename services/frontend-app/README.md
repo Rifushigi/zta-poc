@@ -5,30 +5,35 @@ A modern React-based user interface for the Zero Trust Architecture Proof of Con
 ## Features
 
 ### 🔐 Authentication & Authorization
+
 - **Keycloak Integration**: Seamless SSO with Keycloak
 - **Role-Based Access**: Different views based on user roles
 - **JWT Token Management**: Automatic token refresh and validation
 - **Secure Logout**: Proper session cleanup
 
 ### 📊 Dashboard
+
 - **User Overview**: Personal data and activity summary
 - **Security Status**: Authentication and authorization metrics
 - **System Health**: Service status indicators
 - **Recent Activity**: Audit trail visualization
 
 ### 📝 Data Management
+
 - **CRUD Operations**: Create, read, update, delete items
 - **Role-Based Access**: Users can only access their own data
 - **Real-time Updates**: Live data synchronization
 - **Search & Filter**: Advanced data filtering capabilities
 
 ### 🔧 Admin Panel (Admin Only)
+
 - **User Management**: View and manage all users
 - **System Overview**: Comprehensive system metrics
 - **Policy Management**: OPA policy configuration interface
 - **Audit Logs**: Complete activity audit trail
 
 ### 🛡️ Security Overview (Admin/Security Roles)
+
 - **Authentication Analytics**: Success/failure rates
 - **Authorization Decisions**: OPA policy evaluation results
 - **Threat Detection**: Suspicious activity monitoring
@@ -80,9 +85,10 @@ docker run -p 8080:443 zero-trust-frontend
 ## Integration
 
 The frontend integrates with:
+
 - **Backend API**: RESTful API for data operations
 - **Keycloak**: Identity and access management
-- **Kong Gateway**: API gateway with mTLS
+- **Express Gateway**: API gateway with JWT validation, OPA policy enforcement, rate limiting, logging, metrics, error handling, IP filtering, and request validation
 - **OPA**: Policy enforcement engine
 
 ## Demo Scenarios
@@ -93,4 +99,4 @@ The frontend integrates with:
 4. **Security Monitoring**: View security metrics and alerts
 5. **Policy Enforcement**: Test OPA policy decisions
 
-This frontend provides a complete user experience for demonstrating Zero Trust concepts in action. 
+This frontend provides a complete user experience for demonstrating Zero Trust concepts in action.
