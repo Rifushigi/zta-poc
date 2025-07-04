@@ -55,7 +55,8 @@ curl -s -X POST \
     "redirectUris": ["http://localhost:3000/*"],
     "webOrigins": ["http://localhost:3000"],
     "publicClient": false,
-    "protocol": "openid-connect"
+    "protocol": "openid-connect",
+    "directAccessGrantsEnabled": true
   }'
 
 # Get client ID
