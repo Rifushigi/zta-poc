@@ -14,7 +14,7 @@ openssl req -new -x509 -days 365 -key $CERT_DIR/ca.key -out $CERT_DIR/ca.crt \
 echo "Generating server certificate and key..."
 openssl genrsa -out $CERT_DIR/server.key 2048
 openssl req -new -key $CERT_DIR/server.key -out $CERT_DIR/server.csr \
-  -subj "/C=NG/ST=Lagos/L=Lagos/O=Zero Trust/CN=api-gateway"
+  -subj "/C=NG/ST=Lagos/L=Lagos/O=Zero Trust/CN=kong"
 openssl x509 -req -days 365 -in $CERT_DIR/server.csr -CA $CERT_DIR/ca.crt \
   -CAkey $CERT_DIR/ca.key -CAcreateserial -out $CERT_DIR/server.crt
 
