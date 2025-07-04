@@ -50,32 +50,22 @@ services:
       retries: 3
 
   # API Gateway
-  api-gateway:
+  kong:
     build:
       context: .
       dockerfile: Dockerfile.kong-opa
-    ports:
-      - "8000:8000"
-      - "8443:8443"
-      - "8001:8001"
-      - "8444:8444"
+    image: kong-custom-opa
+    restart: always
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /kong.yml
       KONG_PLUGINS: bundled,opa
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_LISTEN: 0.0.0.0:8001
-      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
-      KONG_SSL_CERT: /etc/ssl/certs/server.crt
-      KONG_SSL_CERT_KEY: /etc/ssl/certs/server.key
-      KONG_SSL_CIPHER_SUITE: intermediate
-      KONG_SSL_PROTOCOLS: TLSv1.2, TLSv1.3
     volumes:
-      - ./services/api-gateway/gateway-config.yaml:/kong.yml:ro
-      - ./certs:/etc/ssl/certs:ro
+      - ./kong.yml:/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
     networks:
       - on-prem-net
       - cloud-net
@@ -286,7 +276,7 @@ services:
       - ./certs:/etc/nginx/ssl:ro
     depends_on:
       - keycloak
-      - api-gateway
+      - kong
       - backend-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
