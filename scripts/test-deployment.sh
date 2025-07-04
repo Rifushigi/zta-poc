@@ -71,8 +71,9 @@ test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "
 # Test 6: Network isolation
 echo ""
 echo "🌐 Testing network isolation..."
-ONPREM_CONTAINER=$(docker ps --filter "network=on-prem-net" --format "{{.Names}}" | head -1)
-CLOUD_CONTAINER=$(docker ps --filter "network=cloud-net" --format "{{.Names}}" | head -1)
+# Exclude express-gateway from the test
+ONPREM_CONTAINER=$(docker ps --filter "network=on-prem-net" --format "{{.Names}}" | grep -v "express-gateway" | head -1)
+CLOUD_CONTAINER=$(docker ps --filter "network=cloud-net" --format "{{.Names}}" | grep -v "express-gateway" | head -1)
 
 if [ -n "$ONPREM_CONTAINER" ] && [ -n "$CLOUD_CONTAINER" ]; then
     echo -n "Testing network isolation... "
