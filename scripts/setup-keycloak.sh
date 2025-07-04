@@ -85,93 +85,108 @@ curl -s -X POST \
   }'
 
 # Create roles
-echo "👥 Creating roles..."
-ROLE_ADMIN_RESPONSE=$(curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/roles" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "admin", "description": "Administrator role"}')
-echo "$ROLE_ADMIN_RESPONSE"
+ROLE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/admin/realms/zero-trust/roles/user" -H "Authorization: Bearer $ADMIN_TOKEN")
+if [ "$ROLE_EXISTS" = "200" ]; then
+  echo "Role 'user' already exists, skipping creation."
+else
+  echo "👥 Creating roles..."
+  ROLE_ADMIN_RESPONSE=$(curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/roles" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "admin", "description": "Administrator role"}')
+  echo "$ROLE_ADMIN_RESPONSE"
 
-ROLE_USER_RESPONSE=$(curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/roles" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "user", "description": "Regular user role"}')
-echo "$ROLE_USER_RESPONSE"
+  ROLE_USER_RESPONSE=$(curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/roles" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "user", "description": "Regular user role"}')
+  echo "$ROLE_USER_RESPONSE"
+fi
 
 # Create users
-echo "👤 Creating users..."
+ADMIN_USER_EXISTS=$(curl -s "http://localhost:8080/admin/realms/zero-trust/users?username=admin" -H "Authorization: Bearer $ADMIN_TOKEN" | jq 'length')
+if [ "$ADMIN_USER_EXISTS" -eq 0 ]; then
+  echo "Creating admin user..."
+  # Create admin user
+  ADMIN_USER_RESPONSE=$(curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/users" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@example.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [{
+        "type": "password",
+        "value": "adminpass",
+        "temporary": false
+      }]
+    }')
+  echo "$ADMIN_USER_RESPONSE"
 
-# Create admin user
-ADMIN_USER_RESPONSE=$(curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/users" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "enabled": true,
-    "email": "admin@example.com",
-    "firstName": "Admin",
-    "lastName": "User",
-    "credentials": [{
-      "type": "password",
-      "value": "adminpass",
-      "temporary": false
-    }]
-  }')
-echo "$ADMIN_USER_RESPONSE"
+  # Get admin user ID
+  ADMIN_USER_ID=$(curl -s \
+    "http://localhost:8080/admin/realms/zero-trust/users?username=admin" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
 
-# Get admin user ID
-ADMIN_USER_ID=$(curl -s \
-  "http://localhost:8080/admin/realms/zero-trust/users?username=admin" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+  # Assign admin role to admin user
+  ADMIN_ROLE_ID=$(curl -s \
+    "http://localhost:8080/admin/realms/zero-trust/roles/admin" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
 
-# Assign admin role to admin user
-ADMIN_ROLE_ID=$(curl -s \
-  "http://localhost:8080/admin/realms/zero-trust/roles/admin" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
+  curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/users/$ADMIN_USER_ID/role-mappings/realm" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "[{\"id\":\"$ADMIN_ROLE_ID\",\"name\":\"admin\"}]"
+else
+  echo "Admin user already exists, skipping creation."
+fi
 
-curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/users/$ADMIN_USER_ID/role-mappings/realm" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "[{\"id\":\"$ADMIN_ROLE_ID\",\"name\":\"admin\"}]"
+USER_EXISTS=$(curl -s "http://localhost:8080/admin/realms/zero-trust/users?username=user" -H "Authorization: Bearer $ADMIN_TOKEN" | jq 'length')
+if [ "$USER_EXISTS" -eq 0 ]; then
+  echo "Creating regular user..."
+  # Create regular user
+  USER_RESPONSE=$(curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/users" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "user",
+      "enabled": true,
+      "email": "user@example.com",
+      "firstName": "Regular",
+      "lastName": "User",
+      "credentials": [{
+        "type": "password",
+        "value": "userpass",
+        "temporary": false
+      }]
+    }')
+  echo "$USER_RESPONSE"
 
-# Create regular user
-USER_RESPONSE=$(curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/users" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "user",
-    "enabled": true,
-    "email": "user@example.com",
-    "firstName": "Regular",
-    "lastName": "User",
-    "credentials": [{
-      "type": "password",
-      "value": "userpass",
-      "temporary": false
-    }]
-  }')
-echo "$USER_RESPONSE"
+  # Get user ID
+  USER_ID=$(curl -s \
+    "http://localhost:8080/admin/realms/zero-trust/users?username=user" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
 
-# Get user ID
-USER_ID=$(curl -s \
-  "http://localhost:8080/admin/realms/zero-trust/users?username=user" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+  # Assign user role
+  USER_ROLE_ID=$(curl -s \
+    "http://localhost:8080/admin/realms/zero-trust/roles/user" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
 
-# Assign user role
-USER_ROLE_ID=$(curl -s \
-  "http://localhost:8080/admin/realms/zero-trust/roles/user" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
-
-curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/users/$USER_ID/role-mappings/realm" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "[{\"id\":\"$USER_ROLE_ID\",\"name\":\"user\"}]"
+  curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/users/$USER_ID/role-mappings/realm" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "[{\"id\":\"$USER_ROLE_ID\",\"name\":\"user\"}]"
+else
+  echo "Regular user already exists, skipping creation."
+fi
 
 echo "✅ Keycloak setup complete!"
 echo ""
