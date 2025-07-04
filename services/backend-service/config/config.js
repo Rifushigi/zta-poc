@@ -1,5 +1,8 @@
 require('dotenv').config();
 
+const KEYCLOAK_JWKS_URI = process.env.KEYCLOAK_JWKS_URI || 'http://localhost:8080/realms/zero-trust/protocol/openid-connect/certs';
+module.exports.KEYCLOAK_JWKS_URI = KEYCLOAK_JWKS_URI;
+
 module.exports = {
     development: {
         username: process.env.DB_USER || 'backend',
