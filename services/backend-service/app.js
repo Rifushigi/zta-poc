@@ -7,8 +7,6 @@ const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
-const jwt = require('jsonwebtoken');
-const jwksRsa = require('jwks-rsa');
 
 // Import our utilities and middleware
 const logger = require('./utils/logger');
@@ -79,48 +77,13 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// JWT/JWKS middleware for authentication
-const keycloakIssuer = process.env.KEYCLOAK_ISSUER || 'http://keycloak:8080/realms/zero-trust';
-const keycloakAudience = process.env.KEYCLOAK_AUDIENCE || 'myapp';
-const jwksUri = process.env.KEYCLOAK_JWKS_URI || 'http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs';
-
-const client = jwksRsa({ jwksUri });
-
-function getKey(header, callback) {
-    client.getSigningKey(header.kid, function (err, key) {
-        if (err) {
-            callback(err);
-        } else {
-            const signingKey = key.rsaPublicKey || key.publicKey;
-            callback(null, signingKey);
-        }
-    });
-}
-
+// Add middleware to extract user info from headers
 app.use((req, res, next) => {
-    if (req.path === '/health' || req.path === '/metrics' || req.path.startsWith('/docs')) {
-        return next();
-    }
-    const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Missing or invalid Authorization header' });
-    }
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, getKey, {
-        algorithms: ['RS256'],
-        issuer: keycloakIssuer,
-        audience: keycloakAudience
-    }, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ error: 'Invalid or expired token', details: err.message });
-        }
-        // Extract username and roles from token
-        req.user = {
-            username: decoded.preferred_username || decoded.sub || 'unknown',
-            roles: decoded.realm_access && decoded.realm_access.roles ? decoded.realm_access.roles : []
-        };
-        next();
-    });
+    req.user = {
+        username: req.headers['x-user'] || 'unknown',
+        roles: req.headers['x-roles'] ? req.headers['x-roles'].split(',') : []
+    };
+    next();
 });
 
 // Health check endpoint
