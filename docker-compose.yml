@@ -84,6 +84,7 @@ services:
       - "4000:4000"
     networks:
       - cloud-net
+      - on-prem-net
     environment:
       NODE_ENV: production
       DB_HOST: postgres
@@ -91,6 +92,7 @@ services:
       DB_USER: backend
       DB_PASSWORD: backendpass
       DB_NAME: zerotrust
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
