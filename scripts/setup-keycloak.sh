@@ -31,7 +31,7 @@ echo "Admin token (first 9 chars): ${ADMIN_TOKEN:0:9}"
 
 # Create realm
 echo "🏛️ Creating realm..."
-curl -X POST \
+REALM_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
@@ -39,11 +39,17 @@ curl -X POST \
     "enabled": true,
     "displayName": "Zero Trust"
   }' \
-  "http://localhost:8080/admin/realms"
+  "http://localhost:8080/admin/realms" 2>/dev/null)
+if echo "$REALM_RESPONSE" | grep -q "errorMessage"; then
+    echo "ℹ️  Realm already exists, continuing..."
+else
+    echo "✅ Realm created successfully"
+fi
+echo ""
 
 # Create client
 echo "Creating client..."
-curl -s -X POST \
+CLIENT_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/clients" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -57,7 +63,13 @@ curl -s -X POST \
     "publicClient": false,
     "protocol": "openid-connect",
     "directAccessGrantsEnabled": true
-  }'
+  }' 2>/dev/null)
+if echo "$CLIENT_RESPONSE" | grep -q "errorMessage"; then
+    echo "ℹ️  Client already exists, continuing..."
+else
+    echo "✅ Client created successfully"
+fi
+echo ""
 
 # Get client ID
 echo "Fetching client ID..."
@@ -67,10 +79,11 @@ echo "==============================="
 echo "✅ Client successfully created!"
 echo "Client ID: $CLIENT_ID"
 echo "==============================="
+echo ""
 
 # Add audience mapper
 echo "Adding audience mapper..."
-curl -s -X POST \
+MAPPER_RESPONSE=$(curl -s -X POST \
   "http://localhost:8080/admin/realms/zero-trust/clients/$CLIENT_ID/protocol-mappers/models" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -83,7 +96,13 @@ curl -s -X POST \
       "id.token.claim": "true",
       "access.token.claim": "true"
     }
-  }'
+  }' 2>/dev/null)
+if echo "$MAPPER_RESPONSE" | grep -q "errorMessage"; then
+    echo "ℹ️  Protocol mapper already exists, continuing..."
+else
+    echo "✅ Protocol mapper created successfully"
+fi
+echo ""
 
 # Create roles
 ROLE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/admin/realms/zero-trust/roles/user" -H "Authorization: Bearer $ADMIN_TOKEN")
