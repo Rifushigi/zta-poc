@@ -67,7 +67,7 @@ setup_secrets() {
 # Deploy core services
 deploy_core_services() {
     print_status "Deploying core services..."
-    docker-compose up -d --build
+    docker compose up -d --build
     
     # Wait for services to be ready
     print_status "Waiting for services to be ready..."
