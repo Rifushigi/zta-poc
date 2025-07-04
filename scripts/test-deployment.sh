@@ -63,10 +63,10 @@ test_with_token "Admin access to /api/admin" "http://localhost:8000/api/admin" "
 test_with_token "User access to /api/data" "http://localhost:8000/api/data" "GET" "$USER_TOKEN" "" "200"
 
 # Test user access to admin endpoint (should fail)
-test_with_token "User access to /api/admin (should fail)" "http://localhost:8000/api/admin" "GET" "$USER_TOKEN" "" "403"
+test_with_token "User access to /api/admin (should fail)" "http://localhost:8000/api/admin" "GET" "$USER_TOKEN" "" "403" "true"
 
 # Test access without token (should fail)
-test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "401"
+test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "401" "true"
 
 # Test 6: Network isolation
 echo ""
@@ -89,7 +89,7 @@ fi
 # Test 7: Monitoring
 echo ""
 echo "📊 Testing monitoring stack..."
-test_endpoint "Prometheus" "http://localhost:9090" "200"
+test_endpoint "Prometheus" "http://localhost:9090/graph" "200"
 test_endpoint "Grafana" "http://localhost:3001" "200"
 test_endpoint "Kibana" "http://localhost:5601" "200"
 
