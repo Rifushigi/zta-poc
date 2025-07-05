@@ -3,16 +3,16 @@
 
 set -e
 
-echo "🔑 Setting up Keycloak realm and users..."
+echo "Setting up Keycloak realm and users..."
 
 # Wait for Keycloak to be ready
-echo "⏳ Waiting for Keycloak to be ready..."
+echo "Waiting for Keycloak to be ready..."
 until curl -s http://localhost:8080/health > /dev/null; do
     sleep 5
 done
 
 # Get admin token
-echo "🔐 Getting admin token..."
+echo "Getting admin token..."
 ADMIN_TOKEN=$(curl -s -X POST \
   "http://localhost:8080/realms/master/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
