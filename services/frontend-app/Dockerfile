@@ -14,8 +14,7 @@ RUN npm install --legacy-peer-deps --omit=dev
 COPY . .
 
 # Set environment variables for build
-ENV REACT_APP_API_URL=https://localhost:8443
-ENV REACT_APP_KEYCLOAK_URL=http://localhost:8082/auth
+ENV REACT_APP_API_URL=http://localhost:8000
 ENV NODE_ENV=production
 
 # Build the app
