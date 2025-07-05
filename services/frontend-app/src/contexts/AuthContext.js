@@ -20,15 +20,19 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const initKeycloak = async () => {
             const kc = new Keycloak({
-                url: process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost:8080',
+                url: process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost:8082/auth',
                 realm: process.env.REACT_APP_KEYCLOAK_REALM || 'zero-trust',
                 clientId: process.env.REACT_APP_KEYCLOAK_CLIENT_ID || 'myapp',
+                checkLoginIframe: false,
+                silentCheckSsoRedirectUri: null,
+                enableLogging: true,
+                onLoad: 'login-required',
+                checkLoginIframeInterval: 0
             });
 
             try {
                 const authenticated = await kc.init({
-                    onLoad: 'check-sso',
-                    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+                    onLoad: 'login-required',
                     checkLoginIframe: false
                 });
 
