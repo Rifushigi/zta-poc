@@ -4,7 +4,7 @@
 # Source common test functions
 source "$(dirname "$0")/lib/test-helpers.sh"
 
-echo "🧪 Testing Backend Service Features..."
+echo "Testing Backend Service Features..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -58,7 +58,7 @@ test_with_token() {
         echo -e "${GREEN}✅ PASS${NC}"
         return 0
     else
-        echo -e "${RED}❌ FAIL (got $response, expected $expected_status)${NC}"
+        echo -e "${RED}FAIL (got $response, expected $expected_status)${NC}"
         return 1
     fi
 }
@@ -68,14 +68,15 @@ wait_for_service "Backend" "http://localhost:3000/health"
 
 # Test 1: Health and Metrics endpoints
 echo ""
-echo "🔍 Testing Health and Metrics..."
+echo "Testing Health and Metrics..."
+echo "================================"
 test_endpoint "Health Check" "http://localhost:3000/health" "GET" "" "200"
 test_endpoint "Metrics Endpoint" "http://localhost:3000/metrics" "GET" "" "200"
 
 # Test 2: Input Validation
 echo ""
-echo "✅ Testing Input Validation..."
-
+echo "Testing Input Validation..."
+echo "================================"
 # Test validation failure (empty name)
 test_with_token "Create item with empty name (should fail)" "http://localhost:3000/api/data" "POST" "dummy-token" '{"name":"","description":"test"}' "400"
 
@@ -87,7 +88,8 @@ test_with_token "Create item without description (should fail)" "http://localhos
 
 # Test 3: Rate Limiting
 echo ""
-echo "🚦 Testing Rate Limiting..."
+echo "Testing Rate Limiting..."
+echo "================================"
 echo -n "Testing rate limiting... "
 # Make multiple requests quickly
 for i in {1..5}; do
@@ -105,9 +107,9 @@ for i in {1..5}; do
 done
 
 if [ "$rate_limited" = true ]; then
-    echo -e "${GREEN}✅ PASS (rate limiting working)${NC}"
+    echo -e "${GREEN}PASS (rate limiting working)${NC}"
 else
-    echo -e "${YELLOW}⚠️ Rate limiting not triggered (may need more requests)${NC}"
+    echo -e "${YELLOW} Rate limiting not triggered (may need more requests)${NC}"
 fi
 
 # Clean up temp files
@@ -115,41 +117,44 @@ rm -f /tmp/rate_test_*
 
 # Test 4: Security Headers
 echo ""
-echo "🔒 Testing Security Headers..."
+echo "Testing Security Headers..."
+echo "================================"
 echo -n "Testing security headers... "
 headers=$(curl -s -I http://localhost:3000/health | grep -E "(X-Content-Type-Options|X-Frame-Options|X-XSS-Protection)" | wc -l)
 if [ "$headers" -ge 2 ]; then
-    echo -e "${GREEN}✅ PASS${NC}"
+    echo -e "${GREEN} PASS${NC}"
 else
-    echo -e "${RED}❌ FAIL${NC}"
+    echo -e "${RED} FAIL${NC}"
 fi
 
 # Test 5: Request ID Propagation
 echo ""
-echo "🆔 Testing Request ID Propagation..."
+echo "Testing Request ID Propagation..."
+echo "====================================="
 echo -n "Testing request ID... "
 request_id=$(curl -s -I http://localhost:3000/health | grep "X-Request-ID" | head -1 | cut -d' ' -f2 | tr -d '\r')
 if [ -n "$request_id" ]; then
-    echo -e "${GREEN}✅ PASS (Request ID: $request_id)${NC}"
+    echo -e "${GREEN}PASS (Request ID: $request_id)${NC}"
 else
-    echo -e "${RED}❌ FAIL${NC}"
+    echo -e "${RED}FAIL${NC}"
 fi
 
 # Test 6: CORS
 echo ""
-echo "🌐 Testing CORS..."
+echo "Testing CORS..."
+echo "================================"
 echo -n "Testing CORS headers... "
 cors_headers=$(curl -s -I -H "Origin: http://localhost:3000" http://localhost:3000/health | grep -E "(Access-Control-Allow-Origin|Access-Control-Allow-Credentials)" | wc -l)
 if [ "$cors_headers" -ge 1 ]; then
-    echo -e "${GREEN}✅ PASS${NC}"
+    echo -e "${GREEN}PASS${NC}"
 else
-    echo -e "${RED}❌ FAIL${NC}"
+    echo -e "${RED}FAIL${NC}"
 fi
 
 # Test 7: Error Handling
 echo ""
-echo "⚠️ Testing Error Handling..."
-
+echo "Testing Error Handling..."
+echo "================================"
 # Test 404
 test_endpoint "Non-existent endpoint (should return 404)" "http://localhost:3000/nonexistent" "GET" "" "404"
 
@@ -158,28 +163,29 @@ test_with_token "Invalid JSON (should return 400)" "http://localhost:3000/api/da
 
 # Test 8: Pagination
 echo ""
-echo "📄 Testing Pagination..."
+echo "Testing Pagination..."
+echo "================================"
 echo -n "Testing pagination parameters... "
 # Test with valid pagination parameters
 response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/data?page=1&limit=5")
 if [ "$response" = "401" ]; then
-    echo -e "${GREEN}✅ PASS (pagination validation working)${NC}"
+    echo -e "${GREEN} PASS (pagination validation working)${NC}"
 else
-    echo -e "${YELLOW}⚠️ Unexpected response: $response${NC}"
+    echo -e "${YELLOW} Unexpected response: $response${NC}"
 fi
 
 # Test with invalid pagination parameters
 response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/data?page=0&limit=1000")
 if [ "$response" = "400" ]; then
-    echo -e "${GREEN}✅ PASS (pagination validation working)${NC}"
+    echo -e "${GREEN}PASS (pagination validation working)${NC}"
 else
-    echo -e "${YELLOW}⚠️ Unexpected response: $response${NC}"
+    echo -e "${YELLOW}Unexpected response: $response${NC}"
 fi
 
 echo ""
-echo -e "${GREEN}✅ Backend Service Feature Testing Complete!${NC}"
-echo ""
-echo "📋 Test Summary:"
+echo -e "${GREEN}Backend Service Feature Testing Complete!${NC}"
+echo "================================"
+echo "Test Summary:"
 echo "  - Health and Metrics: Endpoints responding"
 echo "  - Input Validation: Joi schemas working"
 echo "  - Rate Limiting: Protection against abuse"
@@ -188,6 +194,6 @@ echo "  - Request ID: Tracing implemented"
 echo "  - CORS: Cross-origin requests configured"
 echo "  - Error Handling: Proper error responses"
 echo "  - Pagination: Query parameter validation"
-echo ""
-echo "🔧 To test with real authentication, use the main test script:"
+echo "================================"
+echo "To test with real authentication, use the main test script:"
 echo "   ./scripts/test-deployment.sh" 
