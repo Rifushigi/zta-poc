@@ -71,19 +71,21 @@ test_endpoint "No token access (should fail)" "http://localhost:8000/api/data" "
 # Test 6: Network isolation
 echo ""
 echo "🌐 Testing network isolation..."
-# Exclude express-gateway from the test
+# Test that containers on different networks cannot directly communicate
+# (excluding the gateway which is designed to bridge networks)
 ONPREM_CONTAINER=$(docker ps --filter "network=on-prem-net" --format "{{.Names}}" | grep -v "express-gateway" | head -1)
 CLOUD_CONTAINER=$(docker ps --filter "network=cloud-net" --format "{{.Names}}" | grep -v "express-gateway" | head -1)
 
 if [ -n "$ONPREM_CONTAINER" ] && [ -n "$CLOUD_CONTAINER" ]; then
     echo -n "Testing network isolation... "
+    # Test that on-prem container cannot reach cloud container directly
     if docker exec "$ONPREM_CONTAINER" ping -c 1 "$CLOUD_CONTAINER" > /dev/null 2>&1; then
         echo -e "${RED}❌ FAIL (networks not isolated)${NC}"
     else
         echo -e "${GREEN}✅ PASS (networks properly isolated)${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠️ Skipping network isolation test${NC}"
+    echo -e "${YELLOW}⚠️ Skipping network isolation test (insufficient containers)${NC}"
 fi
 
 # Test 7: Monitoring
