@@ -8,12 +8,17 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const promClient = require('prom-client');
 const Joi = require('joi');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.GATEWAY_PORT || 8000;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://backend-service:4000';
 const OPA_URL = process.env.OPA_URL || 'http://opa:8181/v1/data/authz/allow';
 const JWKS_URI = process.env.KEYCLOAK_JWKS_URI || 'http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs';
+const KEYCLOAK_URL = process.env.KEYCLOAK_URL || 'http://keycloak:8080';
+const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || 'zero-trust';
+const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || 'myapp';
+const KEYCLOAK_CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET || 'EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa';
 
 // Winston logger setup
 const logger = winston.createLogger({
@@ -37,6 +42,25 @@ const morganStream = {
 // Logging
 app.use(morgan('combined', { stream: morganStream }));
 
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Body parser middleware for JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS middleware for frontend
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:8082');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 // JWT validation setup
 const client = jwksRsa({ jwksUri: JWKS_URI });
 function getKey(header, callback) {
@@ -46,9 +70,165 @@ function getKey(header, callback) {
     });
 }
 
-// JWT validation middleware
+// Cookie-based JWT validation middleware
+function cookieJwtMiddleware(req, res, next) {
+    if (req.path === '/health' || req.path === '/metrics' || req.path === '/auth/login' || req.path === '/auth/logout') {
+        return next();
+    }
+
+    const token = req.cookies.auth_token || req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: 'No authentication token provided' });
+    }
+
+    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
+        if (err) {
+            // Clear invalid cookie
+            res.clearCookie('auth_token');
+            return res.status(401).json({ error: 'Invalid or expired token', details: err.message });
+        }
+        req.user = decoded;
+        req.token = token;
+        next();
+    });
+}
+
+// Authentication endpoints
+app.post('/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+
+        // Get token from Keycloak
+        const tokenResponse = await axios.post(`${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`,
+            new URLSearchParams({
+                grant_type: 'password',
+                client_id: KEYCLOAK_CLIENT_ID,
+                client_secret: KEYCLOAK_CLIENT_SECRET,
+                username: username,
+                password: password
+            }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        const { access_token, refresh_token } = tokenResponse.data;
+
+        // Set HTTP-only cookie with the token
+        res.cookie('auth_token', access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        // Set refresh token in a separate cookie
+        res.cookie('refresh_token', refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // Decode token to get user info
+        const decoded = jwt.decode(access_token);
+
+        res.json({
+            success: true,
+            user: {
+                username: decoded.preferred_username,
+                email: decoded.email,
+                name: decoded.name,
+                roles: decoded.realm_access?.roles || []
+            }
+        });
+
+        logger.info('User logged in successfully', { username: decoded.preferred_username });
+
+    } catch (error) {
+        logger.error('Login failed', { error: error.message, username: req.body.username });
+
+        if (error.response?.status === 401) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        res.status(500).json({ error: 'Login failed', details: error.message });
+    }
+});
+
+app.post('/auth/logout', (req, res) => {
+    res.clearCookie('auth_token');
+    res.clearCookie('refresh_token');
+    res.json({ success: true, message: 'Logged out successfully' });
+});
+
+app.get('/auth/me', cookieJwtMiddleware, (req, res) => {
+    res.json({
+        user: {
+            username: req.user.preferred_username,
+            email: req.user.email,
+            name: req.user.name,
+            roles: req.user.realm_access?.roles || []
+        }
+    });
+});
+
+app.post('/auth/refresh', async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refresh_token;
+
+        if (!refreshToken) {
+            return res.status(401).json({ error: 'No refresh token provided' });
+        }
+
+        // Refresh token with Keycloak
+        const tokenResponse = await axios.post(`${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`,
+            new URLSearchParams({
+                grant_type: 'refresh_token',
+                client_id: KEYCLOAK_CLIENT_ID,
+                client_secret: KEYCLOAK_CLIENT_SECRET,
+                refresh_token: refreshToken
+            }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        const { access_token, refresh_token } = tokenResponse.data;
+
+        // Update cookies
+        res.cookie('auth_token', access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.cookie('refresh_token', refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.json({ success: true });
+
+    } catch (error) {
+        logger.error('Token refresh failed', { error: error.message });
+        res.clearCookie('auth_token');
+        res.clearCookie('refresh_token');
+        res.status(401).json({ error: 'Token refresh failed' });
+    }
+});
+
+// Legacy JWT validation middleware (for API clients that still use Authorization header)
 function jwtMiddleware(req, res, next) {
-    if (req.path === '/health') return next();
+    if (req.path === '/health' || req.path === '/metrics') return next();
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Missing or invalid Authorization header' });
@@ -219,7 +399,7 @@ app.use((req, res, next) => {
 });
 
 // Apply middlewares and proxy
-app.use(jwtMiddleware);
+app.use(cookieJwtMiddleware);
 app.use(opaEnforce);
 app.use('/api', createProxyMiddleware({
     target: BACKEND_URL,
