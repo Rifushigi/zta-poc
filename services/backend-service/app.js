@@ -7,6 +7,9 @@ const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const axios = require('axios');
 
 // Import our utilities and middleware
 const logger = require('./utils/logger');
@@ -76,6 +79,19 @@ app.use((req, res, next) => {
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cookie and session middleware
+app.use(cookieParser());
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Add middleware to extract user info from headers
 app.use((req, res, next) => {
