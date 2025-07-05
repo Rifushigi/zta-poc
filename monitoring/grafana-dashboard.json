@@ -37,8 +37,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total[5m])",
-          "legendFormat": "{{job}} - {{status_code}}"
+          "expr": "sum by (route) (rate(gateway_http_requests_total[5m]))",
+          "legendFormat": "{{route}}"
         }
       ],
       "yAxes": [{ "label": "Requests/sec", "min": 0 }],
@@ -50,8 +50,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(gateway_http_request_duration_seconds_bucket[5m]))",
-          "legendFormat": "{{job}}"
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gateway_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "Overall 95th percentile"
         }
       ],
       "yAxes": [{ "label": "Seconds", "min": 0 }],
@@ -63,8 +63,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"401\"}[5m])",
-          "legendFormat": "{{job}} - 401 Unauthorized"
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"401\"}[5m]))",
+          "legendFormat": "{{route}} - 401 Unauthorized"
         }
       ],
       "yAxes": [{ "label": "Failures/sec", "min": 0 }],
@@ -76,8 +76,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"403\"}[5m])",
-          "legendFormat": "{{job}} - 403 Forbidden"
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"403\"}[5m]))",
+          "legendFormat": "{{route}} - 403 Forbidden"
         }
       ],
       "yAxes": [{ "label": "Failures/sec", "min": 0 }],
@@ -89,8 +89,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"429\"}[5m])",
-          "legendFormat": "{{job}} - 429 Too Many Requests"
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"429\"}[5m]))",
+          "legendFormat": "{{route}} - 429 Too Many Requests"
         }
       ],
       "yAxes": [{ "label": "Rate Limited/sec", "min": 0 }],
@@ -128,12 +128,12 @@
     },
     {
       "id": 9,
-      "title": "Error Rate by Service",
+      "title": "Error Rate by Route",
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=~\"5..\"}[5m])",
-          "legendFormat": "{{job}} - {{status_code}}"
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=~\"5..\"}[5m]))",
+          "legendFormat": "{{route}} - 5xx Errors"
         }
       ],
       "yAxes": [{ "label": "Errors/sec", "min": 0 }],
@@ -150,8 +150,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_opa_decisions_total[5m])",
-          "legendFormat": "{{job}} - {{decision}}"
+          "expr": "sum by (route) (rate(gateway_opa_decisions_total[5m]))",
+          "legendFormat": "{{route}}"
         }
       ],
       "yAxes": [{ "label": "Decisions/sec", "min": 0 }],
