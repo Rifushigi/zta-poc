@@ -7,8 +7,10 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies needed for build)
-RUN npm install --legacy-peer-deps --omit=dev
+# Clean install to ensure no cached dependencies
+RUN npm cache clean --force
+RUN rm -rf node_modules package-lock.json
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
