@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🔐 Setting up secrets for production deployment..."
+echo "Setting up secrets for production deployment..."
 
 SECRETS_DIR="secrets"
 mkdir -p $SECRETS_DIR
@@ -25,17 +25,17 @@ echo "$KEYCLOAK_PASSWORD" > $SECRETS_DIR/keycloak_admin_password.txt
 # Set proper permissions
 chmod 600 $SECRETS_DIR/*.txt
 
-echo "✅ Secrets created successfully!"
+echo "Secrets created successfully!"
 echo ""
-echo "📋 Generated secrets:"
+echo "Generated secrets:"
 echo "  - Database User: $DB_USER"
 echo "  - Database Password: [generated]"
 echo "  - PostgreSQL User: $POSTGRES_USER"
 echo "  - PostgreSQL Password: [generated]"
 echo "  - Keycloak Admin Password: [generated]"
 echo ""
-echo "🔒 Secret files created in: $SECRETS_DIR/"
-echo "⚠️  Keep these files secure and never commit them to version control!"
+echo "Secret files created in: $SECRETS_DIR/"
+echo "Keep these files secure and never commit them to version control!"
 echo ""
-echo "🚀 To use secrets, run:"
+echo "To use secrets, run:"
 echo "   docker-compose -f docker-compose.secrets.yml up -d" 
