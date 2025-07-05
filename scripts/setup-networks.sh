@@ -15,7 +15,7 @@ if ! docker network ls | grep -q "on-prem-net"; then
         --opt com.docker.network.bridge.name=br-on-prem \
         on-prem-net
 else
-    echo "✅ On-premises network already exists"
+    echo "On-premises network already exists"
 fi
 
 # Create cloud network
@@ -28,9 +28,9 @@ if ! docker network ls | grep -q "cloud-net"; then
         --opt com.docker.network.bridge.name=br-cloud \
         cloud-net
 else
-    echo "✅ Cloud network already exists"
+    echo "Cloud network already exists"
 fi
 
-echo "✅ Network setup complete"
+echo "Network setup complete"
 echo "Available networks:"
 docker network ls | grep -E "(on-prem-net|cloud-net)" 
