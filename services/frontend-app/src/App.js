@@ -1,7 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Components
@@ -10,26 +8,6 @@ import MainApp from './components/MainApp';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-
-// Create theme
-const theme = createTheme({
-    palette: {
-        mode: 'dark',
-        primary: {
-            main: '#2196f3',
-        },
-        secondary: {
-            main: '#f50057',
-        },
-        background: {
-            default: '#0a0a0a',
-            paper: '#1a1a1a',
-        },
-    },
-    typography: {
-        fontFamily: 'Roboto, Arial, sans-serif',
-    },
-});
 
 // Create query client
 const queryClient = new QueryClient({
@@ -47,9 +25,9 @@ const ProtectedRoute = ({ children }) => {
 
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-                <div>Loading...</div>
-            </Box>
+            <div className="flex justify-center items-center min-h-screen bg-gray-900">
+                <div className="text-white">Loading...</div>
+            </div>
         );
     }
 
@@ -66,8 +44,7 @@ function AppContent() {
 
     return (
         <Router>
-            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <CssBaseline />
+            <div className="min-h-screen bg-gray-900 text-white">
                 <Routes>
                     <Route path="/login" element={
                         isAuthenticated ? <Navigate to="/" replace /> : <Login />
@@ -78,7 +55,7 @@ function AppContent() {
                         </ProtectedRoute>
                     } />
                 </Routes>
-            </Box>
+            </div>
         </Router>
     );
 }
@@ -87,11 +64,9 @@ function AppContent() {
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
-            <ThemeProvider theme={theme}>
-                <AuthProvider>
-                    <AppContent />
-                </AuthProvider>
-            </ThemeProvider>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
         </QueryClientProvider>
     );
 }
