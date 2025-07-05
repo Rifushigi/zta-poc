@@ -36,6 +36,12 @@ print_header() {
     echo -e "${BLUE}================================${NC}"
 }
 
+print_section() {
+    echo -e "${BLUE}--------------------------------${NC}"
+    echo -e "${BLUE}$1${NC}"
+    echo -e "${BLUE}--------------------------------${NC}"
+}
+
 # Function to show usage
 show_usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -352,6 +358,7 @@ generate_mixed_traffic() {
 # Main simulation function
 run_simulation() {
     print_header "Starting Traffic Simulation"
+    print_section "Configuration"
     print_status "Type: $TRAFFIC_TYPE"
     print_status "Duration: $DURATION seconds"
     print_status "Intensity: $INTENSITY"
@@ -400,6 +407,7 @@ run_simulation() {
     done
     
     print_header "Simulation Complete"
+    print_section "Results"
     print_status "Total requests: $request_count"
     print_status "Duration: $DURATION seconds"
     
@@ -416,7 +424,7 @@ run_simulation() {
     
     # Show log summary
     echo ""
-    print_status "Log Summary:"
+    print_section "Log Summary"
     if [ -f "$LOG_FILE" ]; then
         echo "Benign requests: $(grep -c "BENIGN" "$LOG_FILE" 2>/dev/null || echo "0")"
         echo "Malicious requests: $(grep -c "MALICIOUS" "$LOG_FILE" 2>/dev/null || echo "0")"
