@@ -36,19 +36,13 @@ This Zero Trust PoC demonstrates a secure, monitored architecture with the follo
 ./scripts/setup-networks.sh
 ```
 
-### 2. Generate Certificates
-
-```bash
-./scripts/generate-certs.sh
-```
-
-### 3. Deploy Services
+### 2. Deploy Services
 
 ```bash
 ./scripts/deploy.sh
 ```
 
-### 4. Setup Users and Traffic Simulation
+### 3. Setup Users and Traffic Simulation
 
 ```bash
 # Create users (1 admin + 10 normal users)
@@ -58,7 +52,7 @@ This Zero Trust PoC demonstrates a secure, monitored architecture with the follo
 ./scripts/test-traffic-simulation.sh
 ```
 
-### 5. Generate Traffic for Monitoring
+### 4. Generate Traffic for Monitoring
 
 ```bash
 # Run mixed traffic for 10 minutes
