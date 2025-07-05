@@ -48,26 +48,49 @@ fi
 echo ""
 
 # Create client
-echo "Creating client..."
-CLIENT_RESPONSE=$(curl -s -X POST \
-  "http://localhost:8080/admin/realms/zero-trust/clients" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "clientId": "myapp",
-    "enabled": true,
-    "clientAuthenticatorType": "client-secret",
-    "secret": "EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa",
-    "redirectUris": ["http://localhost:3000/*"],
-    "webOrigins": ["http://localhost:3000"],
-    "publicClient": false,
-    "protocol": "openid-connect",
-    "directAccessGrantsEnabled": true
-  }' 2>/dev/null)
-if echo "$CLIENT_RESPONSE" | grep -q "errorMessage"; then
-    echo "ℹ️  Client already exists, continuing..."
+# Always ensure correct redirect URIs and web origins
+CLIENT_PAYLOAD='{
+  "clientId": "myapp",
+  "enabled": true,
+  "clientAuthenticatorType": "client-secret",
+  "secret": "EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa",
+  "redirectUris": [
+    "http://localhost:3000/*",
+    "http://localhost:8082/*"
+  ],
+  "webOrigins": [
+    "http://localhost:3000",
+    "http://localhost:8082"
+  ],
+  "publicClient": false,
+  "protocol": "openid-connect",
+  "directAccessGrantsEnabled": true
+}'
+
+# Check if client exists
+CLIENT_ID=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clientId=myapp" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+
+if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
+  echo "Creating client..."
+  CLIENT_RESPONSE=$(curl -s -X POST \
+    "http://localhost:8080/admin/realms/zero-trust/clients" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$CLIENT_PAYLOAD" 2>/dev/null)
+  if echo "$CLIENT_RESPONSE" | grep -q "errorMessage"; then
+      echo "ℹ️  Client already exists, continuing..."
+  else
+      echo "✅ Client created successfully"
+  fi
 else
-    echo "✅ Client created successfully"
+  echo "Updating client redirect URIs and web origins..."
+  UPDATE_RESPONSE=$(curl -s -X PUT \
+    "http://localhost:8080/admin/realms/zero-trust/clients/$CLIENT_ID" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$CLIENT_PAYLOAD" 2>/dev/null)
+  echo "✅ Client updated successfully"
 fi
 echo ""
 
