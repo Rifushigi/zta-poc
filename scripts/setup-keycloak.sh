@@ -3,16 +3,22 @@
 
 set -e
 
+echo "========================================"
 echo "Setting up Keycloak realm and users..."
+echo "========================================"
 
 # Wait for Keycloak to be ready
+echo "----------------------------------------"
 echo "Waiting for Keycloak to be ready..."
+echo "----------------------------------------"
 until curl -s http://localhost:8080/health > /dev/null; do
     sleep 5
 done
 
 # Get admin token
+echo "----------------------------------------"
 echo "Getting admin token..."
+echo "----------------------------------------"
 ADMIN_TOKEN=$(curl -s -X POST \
   "http://localhost:8080/realms/master/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -30,7 +36,9 @@ fi
 echo "Admin token (first 9 chars): ${ADMIN_TOKEN:0:9}"
 
 # Create realm
+echo "----------------------------------------"
 echo "Creating realm..."
+echo "----------------------------------------"
 REALM_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -199,7 +207,9 @@ else
 fi
 
 # Create 10 normal users
+echo "----------------------------------------"
 echo "Creating 10 normal users..."
+echo "----------------------------------------"
 for i in {1..10}; do
   USERNAME="user$i"
   USER_EXISTS=$(curl -s "http://localhost:8080/admin/realms/zero-trust/users?username=$USERNAME" -H "Authorization: Bearer $ADMIN_TOKEN" | jq 'length')
@@ -245,7 +255,9 @@ for i in {1..10}; do
 done
 
 # Create users file for traffic simulation
+echo "----------------------------------------"
 echo "Creating users file for traffic simulation..."
+echo "----------------------------------------"
 USERS_FILE="/tmp/simulation_users.json"
 echo '{"users":[' > "$USERS_FILE"
 
@@ -259,9 +271,13 @@ done
 
 echo ']}' >> "$USERS_FILE"
 
+echo "========================================"
 echo "Keycloak setup complete!"
+echo "========================================"
 echo ""
+echo "----------------------------------------"
 echo "Users created:"
+echo "----------------------------------------"
 echo "  - admin/adminpass (admin role)"
 echo "  - user1/user1pass (user role)"
 echo "  - user2/user2pass (user role)"
@@ -274,4 +290,6 @@ echo "  - user8/user8pass (user role)"
 echo "  - user9/user9pass (user role)"
 echo "  - user10/user10pass (user role)"
 echo ""
-echo "Users file created: $USERS_FILE" 
+echo "----------------------------------------"
+echo "Users file created: $USERS_FILE"
+echo "----------------------------------------" 
