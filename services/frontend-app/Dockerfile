@@ -1,48 +1,24 @@
-# Build stage
-FROM node:18-alpine AS build
+# Dev stage
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
+# Install necessary packages
+RUN apk add --no-cache bash
+
+# Copy package files and install deps
 COPY package*.json ./
 
-# Clean install to ensure no cached dependencies
-RUN npm cache clean --force
-RUN rm -rf node_modules package-lock.json
+RUN npm install ajv@^6.12.6 --save-exact
 RUN npm install --legacy-peer-deps --omit=optional
 
-# Copy source code
-COPY . .
+# Expose the default React dev port
+EXPOSE 3000
 
-# Set environment variables for build
+# Set environment for dev
 ENV REACT_APP_API_URL=http://localhost:8000
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 
-# Build the app
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Copy built app to nginx
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Create SSL directory
-RUN mkdir -p /etc/nginx/ssl
-
-# Expose ports
-EXPOSE 80 443
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start the React dev server
+CMD ["npm", "start"]
