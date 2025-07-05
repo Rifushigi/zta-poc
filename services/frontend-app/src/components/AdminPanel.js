@@ -43,17 +43,11 @@ const AdminPanel = () => {
 
     // API configuration
     const api = axios.create({
-        baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000'
+        baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+        withCredentials: true
     });
 
-    // Add auth interceptor
-    api.interceptors.request.use(async (config) => {
-        const token = await getToken();
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    });
+    // No need for manual token handling - gateway handles auth via cookies
 
     // Fetch admin data
     const { data: adminData, isLoading: adminLoading, error: adminError } = useQuery(
