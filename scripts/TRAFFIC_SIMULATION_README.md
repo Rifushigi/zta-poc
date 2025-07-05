@@ -10,6 +10,14 @@ The traffic simulation system consists of:
 2. **`test-traffic-simulation.sh`** - Test script for quick validation
 3. **Updated `setup-keycloak.sh`** - Creates 10 normal users + 1 admin user
 
+## Architecture Notes
+
+This system operates without a frontend, focusing on:
+
+- **Direct API Testing**: Traffic simulation directly tests the Express Gateway and Backend APIs
+- **Monitoring-Centric**: Grafana serves as the primary interface for system monitoring
+- **Security Validation**: Comprehensive testing of Zero Trust policies and security controls
+
 ## Features
 
 ### Traffic Types
