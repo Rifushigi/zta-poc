@@ -1,45 +1,27 @@
 import React, { useState } from 'react';
-import {
-    Box,
-    Paper,
-    Typography,
-    Button,
-    Container,
-    Card,
-    CardContent,
-    Alert,
-    CircularProgress,
-    TextField,
-    FormControl,
-    InputLabel,
-    OutlinedInput,
-    InputAdornment,
-    IconButton
-} from '@mui/material';
-import { Security, Login as LoginIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Shield, LogIn, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
-    const { login, loading } = useAuth();
     const [formData, setFormData] = useState({
         username: '',
         password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [loginLoading, setLoginLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const { login } = useAuth();
 
-    const handleInputChange = (e) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
-        setError(''); // Clear error when user types
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoginLoading(true);
+        setLoading(true);
         setError('');
 
         try {
@@ -48,150 +30,114 @@ const Login = () => {
                 setError(result.error || 'Login failed');
             }
         } catch (err) {
-            setError('Login failed. Please try again.');
+            setError('An unexpected error occurred');
         } finally {
-            setLoginLoading(false);
+            setLoading(false);
         }
     };
 
-    if (loading) {
-        return (
-            <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                minHeight="100vh"
-                bgcolor="background.default"
-            >
-                <CircularProgress size={60} />
-            </Box>
-        );
-    }
-
     return (
-        <Box
-            minHeight="100vh"
-            display="flex"
-            alignItems="center"
-            bgcolor="background.default"
-            sx={{
-                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)'
-            }}
-        >
-            <Container maxWidth="sm">
-                <Card
-                    elevation={8}
-                    sx={{
-                        borderRadius: 3,
-                        background: 'rgba(26, 26, 26, 0.9)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)'
-                    }}
-                >
-                    <CardContent sx={{ p: 4 }}>
-                        <Box textAlign="center" mb={4}>
-                            <Security
-                                sx={{
-                                    fontSize: 60,
-                                    color: 'primary.main',
-                                    mb: 2
-                                }}
-                            />
-                            <Typography variant="h4" component="h1" gutterBottom>
-                                Zero Trust
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                Secure Authentication Portal
-                            </Typography>
-                        </Box>
-
-                        <Alert severity="info" sx={{ mb: 3 }}>
-                            This application demonstrates Zero Trust Architecture principles including
-                            identity-based access control, policy enforcement, and secure authentication.
-                        </Alert>
-
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 3 }}>
-                                {error}
-                            </Alert>
-                        )}
-
-                        <Box component="form" onSubmit={handleSubmit}>
-                            <TextField
-                                fullWidth
-                                label="Username"
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-8">
+                <div>
+                    <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-600">
+                        <Shield className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+                        Zero Trust Application
+                    </h2>
+                    <p className="mt-2 text-center text-sm text-gray-400">
+                        Sign in to your account
+                    </p>
+                </div>
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <div className="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <label htmlFor="username" className="sr-only">
+                                Username
+                            </label>
+                            <input
+                                id="username"
                                 name="username"
-                                value={formData.username}
-                                onChange={handleInputChange}
-                                margin="normal"
+                                type="text"
                                 required
-                                disabled={loginLoading}
-                                sx={{ mb: 2 }}
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                placeholder="Username"
+                                value={formData.username}
+                                onChange={handleChange}
                             />
-
-                            <FormControl fullWidth margin="normal" required>
-                                <InputLabel htmlFor="password">Password</InputLabel>
-                                <OutlinedInput
+                        </div>
+                        <div>
+                            <label htmlFor="password" className="sr-only">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <input
                                     id="password"
                                     name="password"
                                     type={showPassword ? 'text' : 'password'}
+                                    required
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm pr-10"
+                                    placeholder="Password"
                                     value={formData.password}
-                                    onChange={handleInputChange}
-                                    disabled={loginLoading}
-                                    endAdornment={
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                edge="end"
-                                            >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    }
-                                    label="Password"
+                                    onChange={handleChange}
                                 />
-                            </FormControl>
-
-                            <Box textAlign="center" mt={3}>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    size="large"
-                                    startIcon={loginLoading ? <CircularProgress size={20} /> : <LoginIcon />}
-                                    disabled={loginLoading || !formData.username || !formData.password}
-                                    sx={{
-                                        py: 1.5,
-                                        px: 4,
-                                        fontSize: '1.1rem',
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        boxShadow: 3,
-                                        '&:hover': {
-                                            boxShadow: 6,
-                                            transform: 'translateY(-2px)'
-                                        }
-                                    }}
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    {loginLoading ? 'Signing In...' : 'Sign In'}
-                                </Button>
-                            </Box>
-                        </Box>
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5 text-gray-400" />
+                                    ) : (
+                                        <Eye className="h-5 w-5 text-gray-400" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-                        <Box mt={4} textAlign="center">
-                            <Typography variant="body2" color="text.secondary">
-                                Demo Credentials:
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                <strong>User:</strong> user / userpass
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Admin:</strong> admin / adminpass
-                            </Typography>
-                        </Box>
-                    </CardContent>
-                </Card>
-            </Container>
-        </Box>
+                    {error && (
+                        <div className="rounded-md bg-red-900/50 border border-red-700 p-4">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-red-200">
+                                        {error}
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <LogIn className="h-5 w-5 mr-2" />
+                                    Sign in
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="text-center">
+                        <p className="text-xs text-gray-400">
+                            Demo Credentials:
+                        </p>
+                        <div className="mt-2 space-y-1 text-xs text-gray-500">
+                            <p>Admin: admin / admin123</p>
+                            <p>User: user / user123</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 };
 
