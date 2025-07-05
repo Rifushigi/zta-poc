@@ -179,6 +179,7 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
     networks:
       - on-prem-net
     command:
@@ -189,6 +190,16 @@ services:
       - "--storage.tsdb.retention.time=200h"
       - "--web.enable-lifecycle"
       - "--web.enable-admin-api"
+      - "--storage.tsdb.no-lockfile"
+      - "--storage.tsdb.wal-compression"
+      - "--storage.tsdb.retention.size=2GB"
+      - "--web.max-connections=512"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     healthcheck:
       test:
         [
@@ -310,3 +321,4 @@ volumes:
   postgres_data:
   alertmanager_data:
   keycloak_data:
+  prometheus_data:
