@@ -269,12 +269,11 @@ services:
       - "8081:443" # HTTPS (optional)
     networks:
       - on-prem-net
-      - cloud-net
     volumes:
       - ./certs:/etc/nginx/ssl:ro
     depends_on:
       - keycloak
-      - backend-service
+      - express-gateway
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
