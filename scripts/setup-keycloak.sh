@@ -81,9 +81,9 @@ if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
     -H "Content-Type: application/json" \
     -d "$CLIENT_PAYLOAD" 2>/dev/null)
   if echo "$CLIENT_RESPONSE" | grep -q "errorMessage"; then
-      echo "ℹ️  Client already exists, continuing..."
+      echo "Client already exists, continuing..."
   else
-      echo "✅ Client created successfully"
+      echo "Client created successfully"
   fi
 else
   echo "Updating client redirect URIs and web origins..."
@@ -92,7 +92,7 @@ else
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d "$CLIENT_PAYLOAD" 2>/dev/null)
-  echo "✅ Client updated successfully"
+  echo "Client updated successfully"
 fi
 echo ""
 
@@ -102,12 +102,12 @@ CLIENT_ID=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clien
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
 
 if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
-    echo "❌ Failed to get client ID. Client may not exist."
+    echo "Failed to get client ID. Client may not exist."
     exit 1
 fi
 
 echo "==============================="
-echo "✅ Client configuration complete!"
+echo "Client configuration complete!"
 echo "Client ID: $CLIENT_ID"
 echo "==============================="
 echo ""
@@ -129,9 +129,9 @@ MAPPER_RESPONSE=$(curl -s -X POST \
     }
   }' 2>/dev/null)
 if echo "$MAPPER_RESPONSE" | grep -q "errorMessage"; then
-    echo "ℹ️  Protocol mapper already exists, continuing..."
+    echo "Protocol mapper already exists, continuing..."
 else
-    echo "✅ Protocol mapper created successfully"
+    echo "Protocol mapper created successfully"
 fi
 echo ""
 
@@ -140,7 +140,7 @@ ROLE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/admi
 if [ "$ROLE_EXISTS" = "200" ]; then
   echo "Role 'user' already exists, skipping creation."
 else
-  echo "👥 Creating roles..."
+  echo "Creating roles..."
   ROLE_ADMIN_RESPONSE=$(curl -s -X POST \
     "http://localhost:8080/admin/realms/zero-trust/roles" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -259,9 +259,9 @@ done
 
 echo ']}' >> "$USERS_FILE"
 
-echo "✅ Keycloak setup complete!"
+echo "Keycloak setup complete!"
 echo ""
-echo "👥 Users created:"
+echo "Users created:"
 echo "  - admin/adminpass (admin role)"
 echo "  - user1/user1pass (user role)"
 echo "  - user2/user2pass (user role)"
@@ -274,4 +274,4 @@ echo "  - user8/user8pass (user role)"
 echo "  - user9/user9pass (user role)"
 echo "  - user10/user10pass (user role)"
 echo ""
-echo "📁 Users file created: $USERS_FILE" 
+echo "Users file created: $USERS_FILE" 
