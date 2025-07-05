@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Paper,
@@ -8,13 +8,51 @@ import {
     Card,
     CardContent,
     Alert,
-    CircularProgress
+    CircularProgress,
+    TextField,
+    FormControl,
+    InputLabel,
+    OutlinedInput,
+    InputAdornment,
+    IconButton
 } from '@mui/material';
-import { Security, Login as LoginIcon } from '@mui/icons-material';
+import { Security, Login as LoginIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
     const { login, loading } = useAuth();
+    const [formData, setFormData] = useState({
+        username: '',
+        password: ''
+    });
+    const [showPassword, setShowPassword] = useState(false);
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleInputChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+        setError(''); // Clear error when user types
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoginLoading(true);
+        setError('');
+
+        try {
+            const result = await login(formData.username, formData.password);
+            if (!result.success) {
+                setError(result.error || 'Login failed');
+            }
+        } catch (err) {
+            setError('Login failed. Please try again.');
+        } finally {
+            setLoginLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -72,27 +110,71 @@ const Login = () => {
                             identity-based access control, policy enforcement, and secure authentication.
                         </Alert>
 
-                        <Box textAlign="center">
-                            <Button
-                                variant="contained"
-                                size="large"
-                                startIcon={<LoginIcon />}
-                                onClick={login}
-                                sx={{
-                                    py: 1.5,
-                                    px: 4,
-                                    fontSize: '1.1rem',
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    boxShadow: 3,
-                                    '&:hover': {
-                                        boxShadow: 6,
-                                        transform: 'translateY(-2px)'
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 3 }}>
+                                {error}
+                            </Alert>
+                        )}
+
+                        <Box component="form" onSubmit={handleSubmit}>
+                            <TextField
+                                fullWidth
+                                label="Username"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleInputChange}
+                                margin="normal"
+                                required
+                                disabled={loginLoading}
+                                sx={{ mb: 2 }}
+                            />
+
+                            <FormControl fullWidth margin="normal" required>
+                                <InputLabel htmlFor="password">Password</InputLabel>
+                                <OutlinedInput
+                                    id="password"
+                                    name="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    disabled={loginLoading}
+                                    endAdornment={
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
                                     }
-                                }}
-                            >
-                                Sign In with Keycloak
-                            </Button>
+                                    label="Password"
+                                />
+                            </FormControl>
+
+                            <Box textAlign="center" mt={3}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    size="large"
+                                    startIcon={loginLoading ? <CircularProgress size={20} /> : <LoginIcon />}
+                                    disabled={loginLoading || !formData.username || !formData.password}
+                                    sx={{
+                                        py: 1.5,
+                                        px: 4,
+                                        fontSize: '1.1rem',
+                                        borderRadius: 2,
+                                        textTransform: 'none',
+                                        boxShadow: 3,
+                                        '&:hover': {
+                                            boxShadow: 6,
+                                            transform: 'translateY(-2px)'
+                                        }
+                                    }}
+                                >
+                                    {loginLoading ? 'Signing In...' : 'Sign In'}
+                                </Button>
+                            </Box>
                         </Box>
 
                         <Box mt={4} textAlign="center">
@@ -100,10 +182,10 @@ const Login = () => {
                                 Demo Credentials:
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                <strong>User:</strong> user / password123
+                                <strong>User:</strong> user / userpass
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                <strong>Admin:</strong> admin / admin123
+                                <strong>Admin:</strong> admin / adminpass
                             </Typography>
                         </Box>
                     </CardContent>
