@@ -95,19 +95,30 @@ register.registerMetric(httpRequestsTotal);
 register.registerMetric(opaDecisions);
 
 // Define public endpoints that don't require authentication
-const publicEndpoints = ['/health', '/metrics', '/backend-metrics', '/gateway-metrics', '/auth/login', '/auth/logout'];
+const publicEndpoints = ['/health', '/metrics', '/backend-metrics', '/gateway-metrics', '/auth/login', '/auth/logout', '/backend-health'];
 
 // Check if path is public
 function isPublicEndpoint(path) {
     return publicEndpoints.includes(path);
 }
 
-// Health endpoint - defined early
+// Health endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'healthy', service: 'express-gateway', timestamp: new Date().toISOString() });
 });
 
-// Metrics endpoints - defined early
+app.get('/backend-health', async (req, res) => {
+    try {
+        // Get backend health
+        const backendResponse = await axios.get(process.env.BACKEND_URL + '/health');
+        const { status } = backendResponse.data;
+        res.json({ status: status, service: 'backend-service', timestamp: new Date().toISOString() });
+    } catch (err) {
+        res.status(502).send('Failed to fetch combined metrics: ' + err.message);
+    }
+});
+
+// Metrics endpoints
 app.get('/gateway-metrics', async (req, res) => {
     try {
         res.set('Content-Type', register.contentType);
