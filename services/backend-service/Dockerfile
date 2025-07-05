@@ -5,6 +5,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Force install compatible ajv version
+RUN npm install ajv@^6.12.6
+
 # Install all dependencies (including dev dependencies for sequelize-cli)
 RUN npm install --legacy-peer-deps
 
