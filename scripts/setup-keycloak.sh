@@ -69,8 +69,9 @@ CLIENT_PAYLOAD='{
 }'
 
 # Check if client exists
-CLIENT_ID=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clientId=myapp" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+CLIENT_RESPONSE=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clientId=myapp" \
+  -H "Authorization: Bearer $ADMIN_TOKEN")
+CLIENT_ID=$(echo "$CLIENT_RESPONSE" | jq -r '.[0].id')
 
 if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
   echo "Creating client..."
@@ -95,12 +96,18 @@ else
 fi
 echo ""
 
-# Get client ID
-echo "Fetching client ID..."
+# Get client ID for further operations
+echo "Fetching client ID for configuration..."
 CLIENT_ID=$(curl -s "http://localhost:8080/admin/realms/zero-trust/clients?clientId=myapp" \
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+
+if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
+    echo "❌ Failed to get client ID. Client may not exist."
+    exit 1
+fi
+
 echo "==============================="
-echo "✅ Client successfully created!"
+echo "✅ Client configuration complete!"
 echo "Client ID: $CLIENT_ID"
 echo "==============================="
 echo ""
