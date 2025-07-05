@@ -175,13 +175,13 @@ make_api_request() {
     
     local response=""
     if [ "$method" = "GET" ]; then
-        response=$(curl "${curl_opts[@]}" "${headers[@]}" "http://localhost:4000$endpoint" 2>/dev/null || echo "000:")
+        response=$(curl "${curl_opts[@]}" "${headers[@]}" "http://localhost:8000$endpoint" 2>/dev/null || echo "000:")
     elif [ "$method" = "POST" ]; then
-        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X POST -d "$data" "http://localhost:4000$endpoint" 2>/dev/null || echo "000:")
+        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X POST -d "$data" "http://localhost:8000$endpoint" 2>/dev/null || echo "000:")
     elif [ "$method" = "PUT" ]; then
-        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X PUT -d "$data" "http://localhost:4000$endpoint" 2>/dev/null || echo "000:")
+        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X PUT -d "$data" "http://localhost:8000$endpoint" 2>/dev/null || echo "000:")
     elif [ "$method" = "DELETE" ]; then
-        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X DELETE "http://localhost:4000$endpoint" 2>/dev/null || echo "000:")
+        response=$(curl "${curl_opts[@]}" "${headers[@]}" -X DELETE "http://localhost:8000$endpoint" 2>/dev/null || echo "000:")
     fi
     
     # Extract status code more safely
@@ -475,6 +475,12 @@ check_services() {
     # Check Backend service
     if ! curl -s --max-time 5 --connect-timeout 3 http://localhost:4000/health > /dev/null 2>&1; then
         print_error "Backend service is not running on localhost:4000"
+        exit 1
+    fi
+    
+    # Check Express Gateway
+    if ! curl -s --max-time 5 --connect-timeout 3 http://localhost:8000/health > /dev/null 2>&1; then
+        print_error "Express Gateway is not running on localhost:8000"
         exit 1
     fi
     
