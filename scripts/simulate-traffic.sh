@@ -436,6 +436,7 @@ run_simulation() {
 
 # Check dependencies
 check_dependencies() {
+    print_section "Checking Dependencies"
     local missing_deps=()
     
     for cmd in curl jq; do
@@ -462,6 +463,7 @@ check_dependencies() {
 
 # Check if services are running
 check_services() {
+    print_section "Checking Services"
     print_status "Checking service availability..."
     
     # Check Keycloak
