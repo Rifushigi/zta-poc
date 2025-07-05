@@ -25,7 +25,7 @@ test_endpoint() {
         curl_opts="-k"
     fi
     
-    response=$(curl -s -o /dev/null -w "%{http_code}" $curl_opts "$url")
+    response=$(curl -s -m 30 -o /dev/null -w "%{http_code}" $curl_opts "$url")
     
     if [ "$response" = "$expected_status" ]; then
         if [ "$should_fail" = "true" ]; then
@@ -57,9 +57,9 @@ test_with_token() {
     echo -n "Testing $name... "
     
     if [ -n "$data" ]; then
-        response=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" -H "Authorization: Bearer $token" -H "Content-Type: application/json" -d "$data" "$url")
+        response=$(curl -s -m 30 -o /dev/null -w "%{http_code}" -X "$method" -H "Authorization: Bearer $token" -H "Content-Type: application/json" -d "$data" "$url")
     else
-        response=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" -H "Authorization: Bearer $token" "$url")
+        response=$(curl -s -m 30 -o /dev/null -w "%{http_code}" -X "$method" -H "Authorization: Bearer $token" "$url")
     fi
     
     if [ "$response" = "$expected_status" ]; then
@@ -88,7 +88,7 @@ test_with_mtls() {
     local expected_status="$5"
     
     echo -n "Testing $name... "
-    if curl -s -o /dev/null -w "%{http_code}" --cert "$cert" --key "$key" --cacert certs/ca.crt "$url" | grep -q "$expected_status"; then
+    if curl -s -m 30 -o /dev/null -w "%{http_code}" --cert "$cert" --key "$key" --cacert certs/ca.crt "$url" | grep -q "$expected_status"; then
         echo -e "${GREEN}PASS${NC}"
         return 0
     else
@@ -112,7 +112,7 @@ wait_for_service() {
         curl_opts="-k"
     fi
     
-    until curl -s $curl_opts "$url" > /dev/null 2>&1; do
+    until curl -s -m 10 $curl_opts "$url" > /dev/null 2>&1; do
         attempts=$((attempts + 1))
         if [ $attempts -ge $max_attempts ]; then
             echo -e "${RED}$service_name failed to start after $max_attempts attempts${NC}"
@@ -130,7 +130,7 @@ get_token() {
     local client_id="${3:-myapp}"
     local client_secret="${4:-EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa}"
     
-    local token=$(curl -s -X POST \
+    local token=$(curl -s -m 30 -X POST \
       "http://localhost:8080/realms/zero-trust/protocol/openid-connect/token" \
       -H "Content-Type: application/x-www-form-urlencoded" \
       -d "client_id=$client_id" \
@@ -162,7 +162,7 @@ test_opa_policy() {
     local input_json
     input_json=$(jq -n --arg token "$token" --arg path "$path" '{input: {token: $token, path: $path}}')
 
-    local result=$(curl -s $curl_opts -X POST \
+    local result=$(curl -s -m 30 $curl_opts -X POST \
       "$opa_url" \
       -H "Content-Type: application/json" \
       -d "$input_json")
