@@ -2,3 +2,4 @@ node_modules
 secrets
 certs
 build
+cookies.txt
