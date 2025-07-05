@@ -5,12 +5,8 @@ import { CssBaseline, Box } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Components
-import Layout from './components/Layout';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import DataManagement from './components/DataManagement';
-import AdminPanel from './components/AdminPanel';
-import SecurityOverview from './components/SecurityOverview';
+import MainApp from './components/MainApp';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -46,19 +42,19 @@ const queryClient = new QueryClient({
 });
 
 // Protected Route Component
-const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-    const { isAuthenticated, user, loading } = useAuth();
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <div>Loading...</div>
+            </Box>
+        );
     }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
-    }
-
-    if (requiredRoles.length > 0 && !requiredRoles.some(role => user?.roles?.includes(role))) {
-        return <Navigate to="/dashboard" replace />;
     }
 
     return children;
@@ -74,27 +70,13 @@ function AppContent() {
                 <CssBaseline />
                 <Routes>
                     <Route path="/login" element={
-                        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+                        isAuthenticated ? <Navigate to="/" replace /> : <Login />
                     } />
                     <Route path="/" element={
                         <ProtectedRoute>
-                            <Layout />
+                            <MainApp />
                         </ProtectedRoute>
-                    }>
-                        <Route index element={<Navigate to="/dashboard" replace />} />
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="data" element={<DataManagement />} />
-                        <Route path="admin" element={
-                            <ProtectedRoute requiredRoles={['admin']}>
-                                <AdminPanel />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="security" element={
-                            <ProtectedRoute requiredRoles={['admin', 'security']}>
-                                <SecurityOverview />
-                            </ProtectedRoute>
-                        } />
-                    </Route>
+                    } />
                 </Routes>
             </Box>
         </Router>
