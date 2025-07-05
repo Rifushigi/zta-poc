@@ -198,49 +198,80 @@ else
   echo "Admin user already exists, skipping creation."
 fi
 
-USER_EXISTS=$(curl -s "http://localhost:8080/admin/realms/zero-trust/users?username=user" -H "Authorization: Bearer $ADMIN_TOKEN" | jq 'length')
-if [ "$USER_EXISTS" -eq 0 ]; then
-  echo "Creating regular user..."
-  # Create regular user
-  USER_RESPONSE=$(curl -s -X POST \
-    "http://localhost:8080/admin/realms/zero-trust/users" \
-    -H "Authorization: Bearer $ADMIN_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "username": "user",
-      "enabled": true,
-      "email": "user@example.com",
-      "firstName": "Regular",
-      "lastName": "User",
-      "credentials": [{
-        "type": "password",
-        "value": "userpass",
-        "temporary": false
-      }]
-    }')
-  echo "$USER_RESPONSE"
+# Create 10 normal users
+echo "Creating 10 normal users..."
+for i in {1..10}; do
+  USERNAME="user$i"
+  USER_EXISTS=$(curl -s "http://localhost:8080/admin/realms/zero-trust/users?username=$USERNAME" -H "Authorization: Bearer $ADMIN_TOKEN" | jq 'length')
+  
+  if [ "$USER_EXISTS" -eq 0 ]; then
+    echo "Creating user $USERNAME..."
+    USER_RESPONSE=$(curl -s -X POST \
+      "http://localhost:8080/admin/realms/zero-trust/users" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"username\": \"$USERNAME\",
+        \"enabled\": true,
+        \"email\": \"$USERNAME@example.com\",
+        \"firstName\": \"User$i\",
+        \"lastName\": \"Normal\",
+        \"credentials\": [{
+          \"type\": \"password\",
+          \"value\": \"user${i}pass\",
+          \"temporary\": false
+        }]
+      }")
+    echo "$USER_RESPONSE"
 
-  # Get user ID
-  USER_ID=$(curl -s \
-    "http://localhost:8080/admin/realms/zero-trust/users?username=user" \
-    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+    # Get user ID
+    USER_ID=$(curl -s \
+      "http://localhost:8080/admin/realms/zero-trust/users?username=$USERNAME" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
 
-  # Assign user role
-  USER_ROLE_ID=$(curl -s \
-    "http://localhost:8080/admin/realms/zero-trust/roles/user" \
-    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
+    # Assign user role
+    USER_ROLE_ID=$(curl -s \
+      "http://localhost:8080/admin/realms/zero-trust/roles/user" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.id')
 
-  curl -s -X POST \
-    "http://localhost:8080/admin/realms/zero-trust/users/$USER_ID/role-mappings/realm" \
-    -H "Authorization: Bearer $ADMIN_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "[{\"id\":\"$USER_ROLE_ID\",\"name\":\"user\"}]"
-else
-  echo "Regular user already exists, skipping creation."
-fi
+    curl -s -X POST \
+      "http://localhost:8080/admin/realms/zero-trust/users/$USER_ID/role-mappings/realm" \
+      -H "Authorization: Bearer $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "[{\"id\":\"$USER_ROLE_ID\",\"name\":\"user\"}]"
+  else
+    echo "User $USERNAME already exists, skipping creation."
+  fi
+done
+
+# Create users file for traffic simulation
+echo "Creating users file for traffic simulation..."
+USERS_FILE="/tmp/simulation_users.json"
+echo '{"users":[' > "$USERS_FILE"
+
+# Add admin user
+echo '"admin:adminpass"' >> "$USERS_FILE"
+
+# Add normal users
+for i in {1..10}; do
+  echo ',"user'$i':user'$i'pass"' >> "$USERS_FILE"
+done
+
+echo ']}' >> "$USERS_FILE"
 
 echo "✅ Keycloak setup complete!"
 echo ""
 echo "👥 Users created:"
 echo "  - admin/adminpass (admin role)"
-echo "  - user/userpass (user role)" 
+echo "  - user1/user1pass (user role)"
+echo "  - user2/user2pass (user role)"
+echo "  - user3/user3pass (user role)"
+echo "  - user4/user4pass (user role)"
+echo "  - user5/user5pass (user role)"
+echo "  - user6/user6pass (user role)"
+echo "  - user7/user7pass (user role)"
+echo "  - user8/user8pass (user role)"
+echo "  - user9/user9pass (user role)"
+echo "  - user10/user10pass (user role)"
+echo ""
+echo "📁 Users file created: $USERS_FILE" 
