@@ -48,7 +48,7 @@ show_final_status() {
 
 # Main execution
 main() {
-    echo""
+    echo ""
     echo "Zero Trust Deployment"
     echo "==================================="
     echo ""
