@@ -19,7 +19,6 @@
     "react-router-dom": "^6.30.1",
     "react-scripts": "5.0.1",
     "axios": "^1.10.0",
-    "keycloak-js": "^26.2.0",
     "@mui/material": "^7.1.2",
     "@mui/icons-material": "^7.1.2",
     "@emotion/react": "^11.14.0",
@@ -49,4 +48,4 @@
     ]
   },
   "proxy": "http://localhost:3000"
-} 
+}
