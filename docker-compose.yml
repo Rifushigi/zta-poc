@@ -15,11 +15,6 @@ services:
     volumes:
       - ./certs:/etc/ssl/certs:ro
       - keycloak_data:/opt/keycloak/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Policy Engine
   opa:
@@ -43,11 +38,6 @@ services:
       ]
     networks:
       - on-prem-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # API Gateway (Express Gateway)
   express-gateway:
@@ -69,11 +59,6 @@ services:
       - keycloak
       - opa
       - backend-service
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Backend Service
   backend-service:
@@ -92,11 +77,6 @@ services:
       DB_PASSWORD: backendpass
       DB_NAME: zerotrust
       KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     depends_on:
       - postgres
 
@@ -131,12 +111,6 @@ services:
           memory: 2G
         reservations:
           memory: 1G
-    healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.0
@@ -152,8 +126,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9600 || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 15s
+      retries: 5
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.0
@@ -166,11 +140,6 @@ services:
       - on-prem-net
     depends_on:
       - elasticsearch
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   prometheus:
     image: prom/prometheus:latest
@@ -211,8 +180,8 @@ services:
           "http://localhost:9090/-/healthy",
         ]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 15s
+      retries: 5
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -276,7 +245,7 @@ services:
       - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+      GF_INSTALL_PLUGINS: grafana-clock-panel
     networks:
       - on-prem-net
     volumes:
