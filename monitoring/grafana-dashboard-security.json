@@ -39,8 +39,8 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_opa_decisions_total{result=\"false\"}[5m])",
-          "legendFormat": "{{route}} - {{user}}"
+          "expr": "sum by (route) (rate(gateway_opa_decisions_total{result=\"false\"}[5m]))",
+          "legendFormat": "{{route}}"
         }
       ],
       "yAxes": [{ "label": "Failures/sec", "min": 0 }],
@@ -52,11 +52,11 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_opa_decisions_total{result=\"true\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_opa_decisions_total{result=\"true\"}[5m]))",
           "legendFormat": "Allowed - {{route}}"
         },
         {
-          "expr": "rate(gateway_opa_decisions_total{result=\"false\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_opa_decisions_total{result=\"false\"}[5m]))",
           "legendFormat": "Denied - {{route}}"
         }
       ],
@@ -69,7 +69,7 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"401\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"401\"}[5m]))",
           "legendFormat": "{{route}} - 401 Unauthorized"
         }
       ],
@@ -82,7 +82,7 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"403\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"403\"}[5m]))",
           "legendFormat": "{{route}} - 403 Forbidden"
         }
       ],
@@ -95,7 +95,7 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=\"429\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=\"429\"}[5m]))",
           "legendFormat": "{{route}} - 429 Too Many Requests"
         }
       ],
@@ -108,15 +108,15 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "rate(gateway_http_requests_total{status_code=~\"2..\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=~\"2..\"}[5m]))",
           "legendFormat": "Success (2xx) - {{route}}"
         },
         {
-          "expr": "rate(gateway_http_requests_total{status_code=~\"4..\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=~\"4..\"}[5m]))",
           "legendFormat": "Client Error (4xx) - {{route}}"
         },
         {
-          "expr": "rate(gateway_http_requests_total{status_code=~\"5..\"}[5m])",
+          "expr": "sum by (route) (rate(gateway_http_requests_total{status_code=~\"5..\"}[5m]))",
           "legendFormat": "Server Error (5xx) - {{route}}"
         }
       ],
@@ -129,11 +129,11 @@
       "type": "graph",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(gateway_http_request_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gateway_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "95th percentile"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(gateway_http_request_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(gateway_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "Median"
         }
       ],
