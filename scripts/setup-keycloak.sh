@@ -22,7 +22,7 @@ ADMIN_TOKEN=$(curl -s -X POST \
   -d "client_id=admin-cli" | jq -r '.access_token')
 
 if [ "$ADMIN_TOKEN" = "null" ] || [ -z "$ADMIN_TOKEN" ]; then
-    echo "❌ Failed to get admin token"
+    echo "Failed to get admin token"
     exit 1
 fi
 
@@ -30,7 +30,7 @@ fi
 echo "Admin token (first 9 chars): ${ADMIN_TOKEN:0:9}"
 
 # Create realm
-echo "🏛️ Creating realm..."
+echo "Creating realm..."
 REALM_RESPONSE=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -41,9 +41,9 @@ REALM_RESPONSE=$(curl -s -X POST \
   }' \
   "http://localhost:8080/admin/realms" 2>/dev/null)
 if echo "$REALM_RESPONSE" | grep -q "errorMessage"; then
-    echo "ℹ️  Realm already exists, continuing..."
+    echo "Realm already exists, continuing..."
 else
-    echo "✅ Realm created successfully"
+    echo "Realm created successfully"
 fi
 echo ""
 
