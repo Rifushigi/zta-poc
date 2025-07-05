@@ -12,16 +12,16 @@ scrape_configs:
     static_configs:
       - targets: ["localhost:9090"]
 
-  - job_name: "express-gateway"
+  - job_name: "express-gateway-backend-metrics"
     static_configs:
       - targets: ["express-gateway:8000"]
     metrics_path: /metrics
     scrape_interval: 10s
 
-  - job_name: "backend-service"
+  - job_name: "express-gateway"
     static_configs:
-      - targets: ["backend-service:4000"]
-    metrics_path: /metrics
+      - targets: ["express-gateway:8000"]
+    metrics_path: /gateway-metrics
     scrape_interval: 10s
 
   - job_name: "opa"
@@ -29,15 +29,6 @@ scrape_configs:
       - targets: ["opa:8181"]
     metrics_path: /metrics
     scrape_interval: 10s
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
-
-  - job_name: "keycloak"
-    static_configs:
-      - targets: ["keycloak:8080"]
-    metrics_path: /metrics
-    scrape_interval: 30s
 
   - job_name: "node-exporter"
     static_configs:
