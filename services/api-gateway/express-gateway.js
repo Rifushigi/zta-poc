@@ -119,11 +119,20 @@ app.get('/gateway-metrics', async (req, res) => {
 
 app.get('/metrics', async (req, res) => {
     try {
-        const response = await axios.get(process.env.BACKEND_URL + '/metrics');
-        res.set('Content-Type', response.headers['content-type'] || 'text/plain');
-        res.send(response.data);
+        // Get backend metrics
+        const backendResponse = await axios.get(process.env.BACKEND_URL + '/metrics');
+        const backendMetrics = backendResponse.data;
+
+        // Get gateway metrics
+        const gatewayMetrics = await register.metrics();
+
+        // Combine both metrics
+        const combinedMetrics = gatewayMetrics + '\n' + backendMetrics;
+
+        res.set('Content-Type', 'text/plain');
+        res.send(combinedMetrics);
     } catch (err) {
-        res.status(502).send('Failed to fetch backend metrics: ' + err.message);
+        res.status(502).send('Failed to fetch combined metrics: ' + err.message);
     }
 });
 
