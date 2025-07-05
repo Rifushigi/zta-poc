@@ -1,165 +1,179 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "Zero Trust Infrastructure Dashboard",
-    "tags": ["zero-trust", "security", "monitoring"],
-    "style": "dark",
-    "timezone": "browser",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Service Health Overview",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "up",
-            "legendFormat": "{{job}}"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "thresholds": {
-              "steps": [
-                {"color": "red", "value": 0},
-                {"color": "green", "value": 1}
-              ]
-            }
-          }
-        },
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
-      },
-      {
-        "id": 2,
-        "title": "HTTP Request Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total[5m])",
-            "legendFormat": "{{job}} - {{status_code}}"
-          }
-        ],
-        "yAxes": [
-          {"label": "Requests/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
-      },
-      {
-        "id": 3,
-        "title": "Response Time (95th percentile)",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
-            "legendFormat": "{{job}}"
-          }
-        ],
-        "yAxes": [
-          {"label": "Seconds", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
-      },
-      {
-        "id": 4,
-        "title": "Authentication Failures",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status_code=\"401\"}[5m])",
-            "legendFormat": "{{job}} - 401 Unauthorized"
-          }
-        ],
-        "yAxes": [
-          {"label": "Failures/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
-      },
-      {
-        "id": 5,
-        "title": "Authorization Failures",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status_code=\"403\"}[5m])",
-            "legendFormat": "{{job}} - 403 Forbidden"
-          }
-        ],
-        "yAxes": [
-          {"label": "Failures/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
-      },
-      {
-        "id": 6,
-        "title": "Rate Limiting Events",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status_code=\"429\"}[5m])",
-            "legendFormat": "{{job}} - 429 Too Many Requests"
-          }
-        ],
-        "yAxes": [
-          {"label": "Rate Limited/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
-      },
-      {
-        "id": 7,
-        "title": "Database Operations",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(database_operations_total[5m])",
-            "legendFormat": "{{job}} - {{operation}} - {{status}}"
-          }
-        ],
-        "yAxes": [
-          {"label": "Operations/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
-      },
-      {
-        "id": 8,
-        "title": "System Resources",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-            "legendFormat": "CPU Usage %"
+  "id": null,
+  "title": "Zero Trust Infrastructure Dashboard",
+  "tags": ["zero-trust", "security", "monitoring"],
+  "style": "dark",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Service Health Overview",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
-          {
-            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-            "legendFormat": "Memory Usage %"
-          }
-        ],
-        "yAxes": [
-          {"label": "Percentage", "min": 0, "max": 100}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "noValue": 0
+        }
       },
-      {
-        "id": 9,
-        "title": "Error Rate by Service",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status_code=~\"5..\"}[5m])",
-            "legendFormat": "{{job}} - {{status_code}}"
-          }
-        ],
-        "yAxes": [
-          {"label": "Errors/sec", "min": 0}
-        ],
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
-      }
-    ],
-    "time": {
-      "from": "now-1h",
-      "to": "now"
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
     },
-    "refresh": "30s"
-  }
-} 
+    {
+      "id": 2,
+      "title": "HTTP Request Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_http_requests_total[5m])",
+          "legendFormat": "{{job}} - {{status_code}}"
+        }
+      ],
+      "yAxes": [{ "label": "Requests/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "Response Time (95th percentile)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(gateway_http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "yAxes": [{ "label": "Seconds", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "title": "Authentication Failures",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_http_requests_total{status_code=\"401\"}[5m])",
+          "legendFormat": "{{job}} - 401 Unauthorized"
+        }
+      ],
+      "yAxes": [{ "label": "Failures/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "id": 5,
+      "title": "Authorization Failures",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_http_requests_total{status_code=\"403\"}[5m])",
+          "legendFormat": "{{job}} - 403 Forbidden"
+        }
+      ],
+      "yAxes": [{ "label": "Failures/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+    },
+    {
+      "id": 6,
+      "title": "Rate Limiting Events",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_http_requests_total{status_code=\"429\"}[5m])",
+          "legendFormat": "{{job}} - 429 Too Many Requests"
+        }
+      ],
+      "yAxes": [{ "label": "Rate Limited/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+    },
+    {
+      "id": 7,
+      "title": "Database Operations",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(database_operations_total[5m])",
+          "legendFormat": "{{job}} - {{operation}} - {{status}}"
+        }
+      ],
+      "yAxes": [{ "label": "Operations/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
+    },
+    {
+      "id": 8,
+      "title": "System Resources",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU Usage %"
+        },
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "Memory Usage %"
+        }
+      ],
+      "yAxes": [{ "label": "Percentage", "min": 0, "max": 100 }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 }
+    },
+    {
+      "id": 9,
+      "title": "Error Rate by Service",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_http_requests_total{status_code=~\"5..\"}[5m])",
+          "legendFormat": "{{job}} - {{status_code}}"
+        }
+      ],
+      "yAxes": [{ "label": "Errors/sec", "min": 0 }],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": 0
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 }
+    },
+    {
+      "id": 10,
+      "title": "OPA Authorization Decisions",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(gateway_opa_decisions_total[5m])",
+          "legendFormat": "{{job}} - {{decision}}"
+        }
+      ],
+      "yAxes": [{ "label": "Decisions/sec", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 }
+    },
+    {
+      "id": 11,
+      "title": "Active Connections",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "active_connections",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "yAxes": [{ "label": "Connections", "min": 0 }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}
