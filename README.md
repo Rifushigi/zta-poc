@@ -1,266 +1,215 @@
-# Zero Trust Architecture
+# Zero Trust Architecture Proof of Concept
 
-A comprehensive Zero Trust Architecture implementation for hybrid cloud environments, featuring identity-based access control, policy enforcement, and comprehensive monitoring.
+A comprehensive Zero Trust Architecture demonstration with advanced monitoring, security controls, and traffic simulation capabilities.
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
-This system implements a complete Zero Trust stack with the following components:
+This Zero Trust PoC demonstrates a secure, monitored architecture with the following components:
 
 ### Core Services
 
-- **Keycloak**: Identity and Access Management (IAM)
-- **OPA (Open Policy Agent)**: Policy enforcement engine
-- **Express Gateway**: API Gateway with JWT validation, OPA policy enforcement, rate limiting, logging, metrics, error handling, IP filtering, and request validation
-- **Backend Service**: Node.js application with role-based access control
-- **PostgreSQL**: Database with encrypted connections
+- **Keycloak** (Port 8080): Identity and Access Management
+- **Express Gateway** (Port 8000): API Gateway with Zero Trust policies
+- **Backend Service** (Port 4000): Business logic and data management
+- **PostgreSQL**: Data persistence
 
-### Monitoring & Observability
+### Security & Policy
 
-- **Prometheus**: Metrics collection and alerting
-- **Grafana**: Dashboards for infrastructure and security monitoring
-- **Alertmanager**: Multi-channel alert notifications (Email, Slack)
-- **ELK Stack**: Log aggregation and analysis
-- **Node Exporter**: System metrics collection
+- **OPA** (Port 8181): Policy engine for authorization decisions
+- **Zero Trust Policies**: Rego-based security policies
 
-### Security Features
+### Monitoring Stack
 
-- **JWT Tokens**: Secure token-based authentication
-- **Role-Based Access Control**: Granular permissions
-- **Rate Limiting**: Protection against abuse
-- **Audit Logging**: Comprehensive activity tracking
+- **Prometheus** (Port 9090): Metrics collection and storage
+- **Grafana** (Port 3001): Advanced monitoring dashboards
+- **AlertManager** (Port 9093): Alert management and notifications
+- **Node Exporter** (Port 9100): System metrics collection
+- **Elasticsearch** (Port 9200): Log storage and indexing
+- **Kibana** (Port 5601): Log analysis and visualization
+- **Logstash** (Port 5044): Log processing and forwarding
 
-## 🚀 Quick Start
+## Quick Start
 
-### Prerequisites
-
-- Docker and Docker Compose
-- Node.js 18+ (for local development)
-- OpenSSL (for certificate generation)
-
-### 1. Setup and Deploy
+### 1. Setup Networks
 
 ```bash
-# Clone the repository
-git clone https://github.com/Rifushigi/zta-poc.git
-cd zta-poc
+./scripts/setup-networks.sh
+```
 
-# Generate certificates and setup networks
-./scripts/setup.sh
+### 2. Generate Certificates
 
-# Deploy the entire stack
+```bash
+./scripts/generate-certs.sh
+```
+
+### 3. Deploy Services
+
+```bash
 ./scripts/deploy.sh
 ```
 
-### 2. Access Services
+### 4. Setup Users and Traffic Simulation
 
-- **Frontend**: https://localhost:8081
-- **API Gateway**: http://localhost:8082
-- **Keycloak Admin**: http://localhost:8080 (admin/admin)
+```bash
+# Create users (1 admin + 10 normal users)
+./scripts/setup-keycloak.sh
+
+# Test traffic simulation
+./scripts/test-traffic-simulation.sh
+```
+
+### 5. Generate Traffic for Monitoring
+
+```bash
+# Run mixed traffic for 10 minutes
+./scripts/simulate-traffic.sh --type mixed --duration 600 --intensity normal
+
+# Run malicious traffic for testing security
+./scripts/simulate-traffic.sh --type malicious --duration 300 --intensity high
+```
+
+## Access Points
+
+### Monitoring Dashboards
+
 - **Grafana**: http://localhost:3001 (admin/admin)
+  - Zero Trust Security Dashboard
+  - System Performance Dashboard
+  - Node Exporter Dashboard
 - **Prometheus**: http://localhost:9090
-- **Alertmanager**: http://localhost:9093
 - **Kibana**: http://localhost:5601
 
-### 3. Configure Monitoring
+### API Access
+
+- **Express Gateway**: http://localhost:8000
+- **Backend Service**: http://localhost:4000
+- **Keycloak**: http://localhost:8080
+
+## Traffic Simulation
+
+The system includes comprehensive traffic simulation capabilities:
+
+### Traffic Types
+
+- **Benign**: Normal user activities and API calls
+- **Malicious**: Attack attempts (SQL injection, XSS, unauthorized access)
+- **Mixed**: Combination of benign and malicious traffic
+
+### Usage Examples
 
 ```bash
-# Configure alert notifications
-cd monitoring
-./configure-alerts.sh
+# Quick test
+./scripts/test-traffic-simulation.sh
+
+# Normal operations
+./scripts/simulate-traffic.sh --type benign --duration 600 --intensity normal
+
+# Security testing
+./scripts/simulate-traffic.sh --type malicious --duration 300 --intensity high
+
+# Realistic environment
+./scripts/simulate-traffic.sh --type mixed --duration 900 --intensity normal
 ```
 
-## 📊 Monitoring Dashboards
+## Monitoring Features
 
-### Infrastructure Dashboard
+### Grafana Dashboards
 
-- Service health and availability
-- Performance metrics (response times, throughput)
-- Resource utilization (CPU, memory, disk)
-- Error rates and failure patterns
+- **Security Events**: Real-time security monitoring
+- **Performance Metrics**: System and application performance
+- **User Activity**: User behavior and access patterns
+- **Error Tracking**: Error rates and types
+- **Traffic Analysis**: Request patterns and trends
 
-### Security Dashboard
+### Alerting
 
-- Authentication success/failure rates
-- Authorization decisions and policy evaluation
-- JWT token validation statistics
-- Rate limiting and suspicious activity
-- Certificate expiry monitoring
+- High error rates
+- Unusual traffic patterns
+- Security violations
+- System resource issues
 
-## 🔔 Alerting
+## Security Features
 
-The monitoring stack includes comprehensive alerting:
+### Zero Trust Principles
 
-- **Service Health**: Automatic detection of service failures
-- **Performance**: High error rates and response times
-- **Security**: Authentication failures and suspicious activity
-- **Infrastructure**: Resource exhaustion and certificate expiry
+- **Identity Verification**: Keycloak-based authentication
+- **Policy Enforcement**: OPA-based authorization
+- **Continuous Monitoring**: Real-time security monitoring
+- **Least Privilege**: Role-based access control
 
-### Notification Channels
+### Security Controls
 
-- **Slack**: General alerts and security notifications
-- **Email**: Critical alerts to admin and security teams
-- **Webhook**: Integration with external systems
-
-## 🛡️ Security Features
-
-### Identity & Access Management
-
-- Multi-factor authentication support
-- Role-based access control (RBAC)
-- JWT token management
-- Session management
-
-### Policy Enforcement
-
-- Fine-grained authorization policies
-- Real-time policy evaluation
-- Audit trail for all decisions
-- Policy versioning and rollback
-
-### Network Security
-
-- Network segmentation and isolation
-- Encrypted communication channels
-- Certificate management
-
-### Application Security
-
-- Input validation and sanitization
-- Rate limiting and DDoS protection
-- Security headers and CORS policies
-- Comprehensive audit logging
-
-## 🧪 Testing
-
-### Automated Tests
-
-```bash
-# Run unit tests
-npm test
-
-# Run integration tests
-npm run test:integration
-
-# Run security tests
-npm run test:security
-```
-
-### Manual Testing
-
-```bash
-# Test API endpoints
-./scripts/test-api.sh
-
-# Test authentication flow
-./scripts/test-auth.sh
-
-# Test policy enforcement
-./scripts/test-policies.sh
-```
-
-## 📈 Observability
-
-### Metrics Collection
-
-- Application performance metrics
-- Security event metrics
-- Infrastructure metrics
-- Custom business metrics
-
-### Logging
-
-- Structured JSON logging
-- Centralized log aggregation
-- Log retention and rotation
+- JWT token validation
+- Rate limiting
+- Input validation
+- Audit logging
 - Security event correlation
 
-### Tracing
+## Development
 
-- Distributed request tracing
-- Performance bottleneck identification
-- Error correlation across services
+### Project Structure
 
-## 🔧 Configuration
-
-### Environment Variables
-
-Key configuration options are available via environment variables:
-
-```bash
-# Database
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=backend
-DB_PASSWORD=backendpass
-DB_NAME=zerotrust
-
-# Security
-JWT_SECRET=your-jwt-secret
-NODE_ENV=production
-
-# Monitoring
-PROMETHEUS_PORT=9090
-GRAFANA_PORT=3001
+```
+├── services/
+│   ├── api-gateway/          # Express Gateway
+│   └── backend-service/      # Business logic
+├── monitoring/               # Monitoring stack configs
+├── policies/                 # OPA security policies
+├── scripts/                  # Automation scripts
+└── networks/                 # Docker network configs
 ```
 
-### Customization
+### Key Scripts
 
-- Modify policies in `policies/` directory
-- Update API gateway configuration in `services/api-gateway/`
-- Customize dashboards in `monitoring/`
-- Add new alert rules in `monitoring/alerts.yml`
+- `scripts/setup-keycloak.sh`: User and realm setup
+- `scripts/simulate-traffic.sh`: Traffic simulation
+- `scripts/test-traffic-simulation.sh`: Quick validation
+- `scripts/deploy.sh`: Full deployment
 
-## 🚀 Deployment
+## Troubleshooting
 
-### Production Deployment
+### Common Issues
+
+1. **Services not starting**: Check network setup and certificates
+2. **Authentication failures**: Re-run user setup script
+3. **No monitoring data**: Run traffic simulation scripts
+4. **Port conflicts**: Ensure ports are available
+
+### Debug Commands
 
 ```bash
-# Setup production environment
-./scripts/setup-production.sh
+# Check service health
+docker-compose ps
 
-# Deploy the stack
-./scripts/deploy.sh
+# View logs
+docker-compose logs -f [service-name]
+
+# Test API access
+curl http://localhost:8000/health
+curl http://localhost:4000/health
 ```
 
-### CI/CD Pipeline
+## Architecture Benefits
 
-- Automated testing on pull requests
-- Security scanning and vulnerability assessment
-- Automated deployment to staging/production
-- Rollback capabilities
+### Simplified Design
 
-## 📚 Documentation
+- **No Frontend Complexity**: Focus on monitoring and security
+- **Direct API Access**: Traffic simulation directly tests the API
+- **Monitoring-Centric**: Grafana as the primary interface
+- **Reduced Attack Surface**: Fewer components to secure
 
-- [Implementation Guide](implementation_guide.md)
-- [Monitoring Setup](monitoring/README.md)
-- [API Documentation](services/backend-service/README.md)
-- [Policy Reference](policies/README.md)
+### Enhanced Monitoring
 
-## 🤝 Contributing
+- **Real-time Metrics**: Prometheus + Grafana
+- **Security Events**: Comprehensive security monitoring
+- **Performance Tracking**: System and application metrics
+- **Log Analysis**: ELK stack for log processing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+### Zero Trust Validation
 
-## 📄 License
+- **Policy Enforcement**: OPA-based security policies
+- **Identity Management**: Keycloak authentication
+- **Continuous Monitoring**: Real-time security validation
+- **Traffic Analysis**: Behavioral analysis and anomaly detection
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For questions and support:
-
-- Create an issue in the repository
-- Check the documentation
-- Review the troubleshooting guides
-
-## 🔄 Roadmap
-
-- [ ] Kubernetes deployment support
-- [ ] Advanced threat detection
-- [ ] Machine learning-based anomaly detection
-- [ ] Multi-region deployment
-- [ ] Advanced policy language support
-- [ ] Integration with external security tools
+This architecture provides a robust foundation for Zero Trust principles with comprehensive monitoring and security controls.
