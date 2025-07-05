@@ -21,8 +21,8 @@ export const AuthProvider = ({ children }) => {
         const initKeycloak = async () => {
             const kc = new Keycloak({
                 url: process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost:8080',
-                realm: 'zerotrust',
-                clientId: 'frontend-app'
+                realm: process.env.REACT_APP_KEYCLOAK_REALM || 'zero-trust',
+                clientId: process.env.REACT_APP_KEYCLOAK_CLIENT_ID || 'myapp',
             });
 
             try {
