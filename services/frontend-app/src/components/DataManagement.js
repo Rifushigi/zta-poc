@@ -46,16 +46,8 @@ const DataManagement = () => {
 
     // API configuration
     const api = axios.create({
-        baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000'
-    });
-
-    // Add auth interceptor
-    api.interceptors.request.use(async (config) => {
-        const token = await getToken();
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+        baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+        withCredentials: true
     });
 
     // Fetch data
