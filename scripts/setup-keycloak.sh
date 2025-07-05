@@ -56,7 +56,8 @@ CLIENT_PAYLOAD='{
   "secret": "EJO8EHORKiNmG6dQx3SFFoL7GwZChSOa",
   "redirectUris": [
     "http://localhost:3000/*",
-    "http://localhost:8082/*"
+    "http://localhost:8082/*",
+    "http://localhost:8082/auth/*"
   ],
   "webOrigins": [
     "http://localhost:3000",
