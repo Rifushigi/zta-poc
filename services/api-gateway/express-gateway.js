@@ -70,9 +70,127 @@ function getKey(header, callback) {
     });
 }
 
+// Prometheus metrics setup
+const register = new promClient.Registry();
+promClient.collectDefaultMetrics({ register });
+
+const httpRequestDuration = new promClient.Histogram({
+    name: 'gateway_http_request_duration_seconds',
+    help: 'Duration of HTTP requests in seconds',
+    labelNames: ['method', 'route', 'status_code'],
+    buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5]
+});
+const httpRequestsTotal = new promClient.Counter({
+    name: 'gateway_http_requests_total',
+    help: 'Total number of HTTP requests',
+    labelNames: ['method', 'route', 'status_code']
+});
+const opaDecisions = new promClient.Counter({
+    name: 'gateway_opa_decisions_total',
+    help: 'Total number of OPA policy decisions',
+    labelNames: ['result', 'route', 'user']
+});
+register.registerMetric(httpRequestDuration);
+register.registerMetric(httpRequestsTotal);
+register.registerMetric(opaDecisions);
+
+// Define public endpoints that don't require authentication
+const publicEndpoints = ['/health', '/metrics', '/backend-metrics', '/gateway-metrics', '/auth/login', '/auth/logout'];
+
+// Check if path is public
+function isPublicEndpoint(path) {
+    return publicEndpoints.includes(path);
+}
+
+// Health endpoint - defined early
+app.get('/health', (req, res) => {
+    res.json({ status: 'healthy', service: 'express-gateway', timestamp: new Date().toISOString() });
+});
+
+// Metrics endpoints - defined early
+app.get('/gateway-metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(502).send('Failed to fetch gateway metrics: ' + err.message);
+    }
+});
+
+app.get('/metrics', async (req, res) => {
+    try {
+        const response = await axios.get(process.env.BACKEND_URL + '/metrics');
+        res.set('Content-Type', response.headers['content-type'] || 'text/plain');
+        res.send(response.data);
+    } catch (err) {
+        res.status(502).send('Failed to fetch backend metrics: ' + err.message);
+    }
+});
+
+// Auditing middleware: log all requests and OPA decisions
+app.use((req, res, next) => {
+    // Skip auditing for metrics endpoints
+    if (isPublicEndpoint(req.path)) {
+        return next();
+    }
+
+    const start = process.hrtime();
+    res.on('finish', () => {
+        const duration = process.hrtime(start);
+        const durationSec = duration[0] + duration[1] / 1e9;
+        const route = req.route?.path || req.path;
+        httpRequestDuration.labels(req.method, route, res.statusCode).observe(durationSec);
+        httpRequestsTotal.labels(req.method, route, res.statusCode).inc();
+        logger.info('Request', {
+            method: req.method,
+            path: req.originalUrl,
+            status: res.statusCode,
+            user: req.user?.preferred_username || req.user?.sub,
+            ip: req.ip,
+            durationMs: Math.round(durationSec * 1000),
+            requestId: req.headers['x-request-id']
+        });
+    });
+    next();
+});
+
+// IP Whitelisting/Blacklisting Middleware
+const ipWhitelist = process.env.GATEWAY_IP_WHITELIST ? process.env.GATEWAY_IP_WHITELIST.split(',').map(ip => ip.trim()) : null;
+const ipBlacklist = process.env.GATEWAY_IP_BLACKLIST ? process.env.GATEWAY_IP_BLACKLIST.split(',').map(ip => ip.trim()) : [];
+
+app.use((req, res, next) => {
+    // Skip IP filtering for public endpoints
+    if (isPublicEndpoint(req.path)) {
+        return next();
+    }
+
+    const clientIp = req.ip || req.connection.remoteAddress;
+    if (ipWhitelist && !ipWhitelist.includes(clientIp)) {
+        logger.warn('Blocked by IP whitelist', { ip: clientIp });
+        return res.status(403).json({ error: 'Access denied: IP not whitelisted' });
+    }
+    if (ipBlacklist.includes(clientIp)) {
+        logger.warn('Blocked by IP blacklist', { ip: clientIp });
+        return res.status(403).json({ error: 'Access denied: IP blacklisted' });
+    }
+    next();
+});
+
+// Rate limiting middleware
+const limiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 100, // limit each IP to 100 requests per windowMs
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => isPublicEndpoint(req.path)
+});
+app.use(limiter);
+
 // Cookie-based JWT validation middleware
 function cookieJwtMiddleware(req, res, next) {
-    if (req.path === '/health' || req.path === '/metrics' || req.path === '/auth/login' || req.path === '/auth/logout') {
+    // Skip authentication for public endpoints
+    if (isPublicEndpoint(req.path)) {
         return next();
     }
 
@@ -92,6 +210,41 @@ function cookieJwtMiddleware(req, res, next) {
         req.token = token;
         next();
     });
+}
+
+// OPA enforcement middleware
+async function opaEnforce(req, res, next) {
+    // Skip OPA for public endpoints
+    if (isPublicEndpoint(req.path)) {
+        return next();
+    }
+
+    try {
+        const input = {
+            token: req.token,
+            path: req.path,
+            method: req.method,
+            user: req.user,
+        };
+        const opaResp = await axios.post(OPA_URL, { input });
+        logger.info('OPA decision', {
+            path: req.path,
+            method: req.method,
+            user: req.user?.preferred_username || req.user?.sub,
+            opaResult: opaResp.data.result,
+            opaInput: input
+        });
+        opaDecisions.labels(
+            String(opaResp.data.result),
+            req.path,
+            req.user?.preferred_username || req.user?.sub || 'unknown'
+        ).inc();
+        if (opaResp.data.result === true) return next();
+        return res.status(403).json({ error: 'Forbidden by OPA policy' });
+    } catch (err) {
+        logger.error('OPA policy check failed', { error: err.message, path: req.path, user: req.user });
+        return res.status(500).json({ error: 'OPA policy check failed', details: err.message });
+    }
 }
 
 // Authentication endpoints
@@ -226,138 +379,7 @@ app.post('/auth/refresh', async (req, res) => {
     }
 });
 
-// Legacy JWT validation middleware (for API clients that still use Authorization header)
-function jwtMiddleware(req, res, next) {
-    if (req.path === '/health' || req.path === '/metrics') return next();
-    const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Missing or invalid Authorization header' });
-    }
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
-        if (err) return res.status(401).json({ error: 'Invalid or expired token', details: err.message });
-        req.user = decoded;
-        req.token = token;
-        next();
-    });
-}
-
-// Prometheus metrics setup
-const register = new promClient.Registry();
-promClient.collectDefaultMetrics({ register });
-
-const httpRequestDuration = new promClient.Histogram({
-    name: 'gateway_http_request_duration_seconds',
-    help: 'Duration of HTTP requests in seconds',
-    labelNames: ['method', 'route', 'status_code'],
-    buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5]
-});
-const httpRequestsTotal = new promClient.Counter({
-    name: 'gateway_http_requests_total',
-    help: 'Total number of HTTP requests',
-    labelNames: ['method', 'route', 'status_code']
-});
-const opaDecisions = new promClient.Counter({
-    name: 'gateway_opa_decisions_total',
-    help: 'Total number of OPA policy decisions',
-    labelNames: ['result', 'route', 'user']
-});
-register.registerMetric(httpRequestDuration);
-register.registerMetric(httpRequestsTotal);
-register.registerMetric(opaDecisions);
-
-// Metrics endpoint
-app.get('/metrics', async (req, res) => {
-    res.set('Content-Type', register.contentType);
-    res.end(await register.metrics());
-});
-
-// Auditing middleware: log all requests and OPA decisions
-app.use((req, res, next) => {
-    const start = process.hrtime();
-    res.on('finish', () => {
-        const duration = process.hrtime(start);
-        const durationSec = duration[0] + duration[1] / 1e9;
-        const route = req.route?.path || req.path;
-        httpRequestDuration.labels(req.method, route, res.statusCode).observe(durationSec);
-        httpRequestsTotal.labels(req.method, route, res.statusCode).inc();
-        logger.info('Request', {
-            method: req.method,
-            path: req.originalUrl,
-            status: res.statusCode,
-            user: req.user?.preferred_username || req.user?.sub,
-            ip: req.ip,
-            durationMs: Math.round(durationSec * 1000),
-            requestId: req.headers['x-request-id']
-        });
-    });
-    next();
-});
-
-// IP Whitelisting/Blacklisting Middleware
-const ipWhitelist = process.env.GATEWAY_IP_WHITELIST ? process.env.GATEWAY_IP_WHITELIST.split(',').map(ip => ip.trim()) : null;
-const ipBlacklist = process.env.GATEWAY_IP_BLACKLIST ? process.env.GATEWAY_IP_BLACKLIST.split(',').map(ip => ip.trim()) : [];
-
-app.use((req, res, next) => {
-    const clientIp = req.ip || req.connection.remoteAddress;
-    if (ipWhitelist && !ipWhitelist.includes(clientIp)) {
-        logger.warn('Blocked by IP whitelist', { ip: clientIp });
-        return res.status(403).json({ error: 'Access denied: IP not whitelisted' });
-    }
-    if (ipBlacklist.includes(clientIp)) {
-        logger.warn('Blocked by IP blacklist', { ip: clientIp });
-        return res.status(403).json({ error: 'Access denied: IP blacklisted' });
-    }
-    next();
-});
-
-// OPA enforcement middleware
-async function opaEnforce(req, res, next) {
-    if (req.path === '/health' || req.path === '/metrics') return next();
-    try {
-        const input = {
-            token: req.token,
-            path: req.path,
-            method: req.method,
-            user: req.user,
-        };
-        const opaResp = await axios.post(OPA_URL, { input });
-        logger.info('OPA decision', {
-            path: req.path,
-            method: req.method,
-            user: req.user?.preferred_username || req.user?.sub,
-            opaResult: opaResp.data.result,
-            opaInput: input
-        });
-        opaDecisions.labels(
-            String(opaResp.data.result),
-            req.path,
-            req.user?.preferred_username || req.user?.sub || 'unknown'
-        ).inc();
-        if (opaResp.data.result === true) return next();
-        return res.status(403).json({ error: 'Forbidden by OPA policy' });
-    } catch (err) {
-        logger.error('OPA policy check failed', { error: err.message, path: req.path, user: req.user });
-        return res.status(500).json({ error: 'OPA policy check failed', details: err.message });
-    }
-}
-
-// Rate limiting middleware
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 100, // limit each IP to 100 requests per windowMs
-    message: { error: 'Too many requests, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use(limiter);
-
-// Health endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: 'healthy', service: 'express-gateway', timestamp: new Date().toISOString() });
-});
-
-// Request validation middleware for /api/data POST
+// Request validation middleware for /api/data POST - Fixed to use already parsed body
 const dataSchema = Joi.object({
     name: Joi.string().min(1).required(),
     description: Joi.string().allow('').required()
@@ -365,42 +387,20 @@ const dataSchema = Joi.object({
 
 app.use('/api/data', (req, res, next) => {
     if (req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        req.on('end', () => {
-            try {
-                const parsed = JSON.parse(body);
-                const { error } = dataSchema.validate(parsed);
-                if (error) {
-                    logger.warn('Request validation failed', { error: error.details, path: req.path });
-                    return res.status(400).json({ error: 'Validation failed', details: error.details });
-                }
-                req.body = parsed;
-                next();
-            } catch (e) {
-                logger.warn('Invalid JSON in request body', { error: e.message, path: req.path });
-                return res.status(400).json({ error: 'Invalid JSON', details: e.message });
-            }
-        });
-    } else {
-        next();
-    }
-});
-
-// Add this before the proxy middleware
-app.use((req, res, next) => {
-    if (req.user) {
-        req.headers['x-user'] = req.user.preferred_username || req.user.sub || 'unknown';
-        req.headers['x-roles'] = Array.isArray(req.user.realm_access?.roles)
-            ? req.user.realm_access.roles.join(',')
-            : '';
+        const { error } = dataSchema.validate(req.body);
+        if (error) {
+            logger.warn('Request validation failed', { error: error.details, path: req.path });
+            return res.status(400).json({ error: 'Validation failed', details: error.details });
+        }
     }
     next();
 });
 
-// Apply middlewares and proxy
+// Apply authentication and authorization middlewares
 app.use(cookieJwtMiddleware);
 app.use(opaEnforce);
+
+// Apply proxy middleware for API routes
 app.use('/api', createProxyMiddleware({
     target: BACKEND_URL,
     changeOrigin: true,
@@ -431,4 +431,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => console.log(`Express Gateway listening on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`Express Gateway listening on port ${PORT}`));
