@@ -35,6 +35,43 @@ fi
 # Print first 9 characters of the admin token for verification
 echo "Admin token (first 9 chars): ${ADMIN_TOKEN:0:9}"
 
+# Handle master realm admin user - make it permanent if it's temporary
+echo "----------------------------------------"
+echo "Checking master realm admin user..."
+echo "----------------------------------------"
+MASTER_ADMIN_USER=$(curl -s "http://localhost:8080/admin/realms/master/users?username=admin" \
+  -H "Authorization: Bearer $ADMIN_TOKEN")
+
+if [ "$(echo "$MASTER_ADMIN_USER" | jq 'length')" -gt 0 ]; then
+    MASTER_ADMIN_ID=$(echo "$MASTER_ADMIN_USER" | jq -r '.[0].id')
+    MASTER_ADMIN_CREDENTIALS=$(curl -s "http://localhost:8080/admin/realms/master/users/$MASTER_ADMIN_ID/credentials" \
+      -H "Authorization: Bearer $ADMIN_TOKEN")
+    
+    # Check if credentials are temporary
+    TEMPORARY_CREDENTIALS=$(echo "$MASTER_ADMIN_CREDENTIALS" | jq -r '.[0].temporary // false')
+    
+    if [ "$TEMPORARY_CREDENTIALS" = "true" ]; then
+        echo "Master realm admin user has temporary credentials. Making them permanent..."
+        
+        # Update the admin user to have permanent credentials
+        curl -s -X PUT \
+          "http://localhost:8080/admin/realms/master/users/$MASTER_ADMIN_ID/reset-password" \
+          -H "Authorization: Bearer $ADMIN_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "type": "password",
+            "value": "securepassword",
+            "temporary": false
+          }'
+        
+        echo "Master realm admin credentials made permanent."
+    else
+        echo "Master realm admin user already has permanent credentials."
+    fi
+else
+    echo "Master realm admin user not found."
+fi
+
 # Create realm
 echo "----------------------------------------"
 echo "Creating realm..."
