@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Keycloak from 'keycloak-js';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -12,87 +12,83 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [keycloak, setKeycloak] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Configure axios to include credentials (cookies)
+    const api = axios.create({
+        baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+        withCredentials: true,
+        timeout: 10000,
+    });
+
+    // Check authentication status on mount
     useEffect(() => {
-        const initKeycloak = async () => {
-            const kc = new Keycloak({
-                url: process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost:8082/auth',
-                realm: process.env.REACT_APP_KEYCLOAK_REALM || 'zero-trust',
-                clientId: process.env.REACT_APP_KEYCLOAK_CLIENT_ID || 'myapp',
-                checkLoginIframe: false,
-                silentCheckSsoRedirectUri: null,
-                enableLogging: true,
-                onLoad: 'login-required',
-                checkLoginIframeInterval: 0
-            });
-
-            try {
-                const authenticated = await kc.init({
-                    onLoad: 'login-required',
-                    checkLoginIframe: false
-                });
-
-                setKeycloak(kc);
-                setIsAuthenticated(authenticated);
-
-                if (authenticated) {
-                    const userInfo = await kc.loadUserInfo();
-                    setUser({
-                        id: userInfo.sub,
-                        username: userInfo.preferred_username,
-                        email: userInfo.email,
-                        name: userInfo.name,
-                        roles: kc.tokenParsed?.realm_access?.roles || []
-                    });
-                }
-            } catch (error) {
-                console.error('Keycloak initialization failed:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        initKeycloak();
+        checkAuth();
     }, []);
 
-    const login = () => {
-        if (keycloak) {
-            keycloak.login();
+    const checkAuth = async () => {
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data.user);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.log('Not authenticated:', error.message);
+            setUser(null);
+            setIsAuthenticated(false);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const logout = () => {
-        if (keycloak) {
-            keycloak.logout();
+    const login = async (username, password) => {
+        try {
+            const response = await api.post('/auth/login', { username, password });
+            setUser(response.data.user);
+            setIsAuthenticated(true);
+            return { success: true };
+        } catch (error) {
+            console.error('Login failed:', error.response?.data || error.message);
+            return {
+                success: false,
+                error: error.response?.data?.error || 'Login failed'
+            };
         }
     };
 
-    const getToken = async () => {
-        if (keycloak) {
-            try {
-                await keycloak.updateToken(30);
-                return keycloak.token;
-            } catch (error) {
-                console.error('Token refresh failed:', error);
-                logout();
-                return null;
-            }
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            setUser(null);
+            setIsAuthenticated(false);
         }
-        return null;
+    };
+
+    const refreshToken = async () => {
+        try {
+            await api.post('/auth/refresh');
+            await checkAuth(); // Re-check auth status
+            return true;
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            setUser(null);
+            setIsAuthenticated(false);
+            return false;
+        }
     };
 
     const value = {
-        keycloak,
         isAuthenticated,
         user,
         loading,
         login,
         logout,
-        getToken
+        refreshToken,
+        checkAuth
     };
 
     return (
