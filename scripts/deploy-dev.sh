@@ -8,6 +8,7 @@ source "$(dirname "$0")/lib/common.sh"
 show_final_status() {
     echo ""
     print_success "Zero Trust development deployment complete!"
+    echo "============================================================"
     echo ""
     echo "Access URLs:"
     echo "=============="
