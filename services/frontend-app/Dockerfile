@@ -15,7 +15,7 @@ COPY . .
 
 # Set environment variables for build
 ENV REACT_APP_API_URL=https://localhost:8443
-ENV REACT_APP_KEYCLOAK_URL=http://localhost:8080
+ENV REACT_APP_KEYCLOAK_URL=http://localhost:8082/auth
 ENV NODE_ENV=production
 
 # Build the app
