@@ -670,3 +670,5 @@ The implementation serves as a reference architecture for organizations looking 
 ---
 
 **For detailed implementation guidance, operational procedures, and technical specifications, please refer to the accompanying documentation and codebase.**
+
+Note: This architecture no longer includes a frontend web application. All user and attack traffic is simulated directly against the API gateway and backend. Monitoring and dashboards are accessed via Grafana, Prometheus, Kibana, etc.
